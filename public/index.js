@@ -116,24 +116,24 @@ function setUserName() {
         removeNoPermissionMenu(["FUEL", "TEMPLATE"])
     } else if (user.roleName == "UCO") {
         $(".setting").append(settingDropdown.replace("{{item}}", manageUserBtn))
-        removeNoPermissionMenu(["INVOICE", "HISTORY", "CONTRACT", "DASHBOARD", "OPERATIONDASHBOARD", "REPORT", "URGENTTASK"])
+        removeNoPermissionMenu(["INVOICE", "HISTORY", "CONTRACT", "DASHBOARD", "OPERATIONDASHBOARD", "REPORT", "URGENTTASK", "FEEDBACK"])
     } else if (user.roleName == "RQ") {
-        removeNoPermissionMenu(["OPEN", "INVOICE", "ARBITRATION", "HISTORY", "CONTRACT", "BUDGET", "MOBIUSTASK", "DASHBOARD", "OPERATIONDASHBOARD", "REPORT", "TEMPLATE", "URGENTTASK"])
+        removeNoPermissionMenu(["OPEN", "INVOICE", "ARBITRATION", "HISTORY", "CONTRACT", "BUDGET", "MOBIUSTASK", "DASHBOARD", "OPERATIONDASHBOARD", "REPORT", "TEMPLATE", "URGENTTASK", "FEEDBACK"])
     } else if (user.roleName == "TSP") {
-        removeNoPermissionMenu(["TASK", "JOB", "HISTORY", "CONTRACT", "FUEL", "BUDGET", "MOBIUSTASK", "DASHBOARD", "OPERATIONDASHBOARD", "REPORT", "URGENTTASK", "TEMPLATE"])
+        removeNoPermissionMenu(["TASK", "JOB", "HISTORY", "CONTRACT", "FUEL", "BUDGET", "MOBIUSTASK", "DASHBOARD", "OPERATIONDASHBOARD", "REPORT", "URGENTTASK", "TEMPLATE", "FEEDBACK"])
     } else if (occ.indexOf(user.roleName) != -1) {
         if (user.roleName == occ[0]) {
             $(".setting").append(settingDropdown.replace("{{item}}", manageUserBtn + manageAnnouncementBtn))
         }
-        removeNoPermissionMenu(["INITIALPO", "CONTRACT", "FUEL", "BUDGET", "DASHBOARD", "OPERATIONDASHBOARD", "REPORT", "URGENTTASK", "TEMPLATE"])
+        removeNoPermissionMenu(["INITIALPO", "CONTRACT", "FUEL", "BUDGET", "DASHBOARD", "OPERATIONDASHBOARD", "REPORT", "URGENTTASK", "TEMPLATE", "FEEDBACK"])
     } else if (user.roleName == "RA") {
         $(".setting").after(noticeHtml)
         $(".setting").append(settingDropdown.replace("{{item}}", manageUserBtn + manageGroupBtn + manageAnnouncementBtn))
-        removeNoPermissionMenu(["TASK", "JOB", "INITIALPO", "INVOICE", "ARBITRATION", "HISTORY", "FUEL", "BUDGET", "MOBIUSTASK", "DASHBOARD", "OPERATIONDASHBOARD", "REPORT", "URGENTTASK", "TEMPLATE"])
+        removeNoPermissionMenu(["TASK", "JOB", "INITIALPO", "INVOICE", "ARBITRATION", "HISTORY", "FUEL", "BUDGET", "MOBIUSTASK", "DASHBOARD", "OPERATIONDASHBOARD", "REPORT", "URGENTTASK", "TEMPLATE", "FEEDBACK"])
     } else if (user.roleName == "CM") {
         $(".setting").after(noticeHtml)
         $(".setting").append(settingDropdown.replace("{{item}}", manageUserBtn))
-        removeNoPermissionMenu(["TASK", "JOB", "INITIALPO", "INVOICE", "OPEN", "ARBITRATION", "HISTORY", "FUEL", "BUDGET", "MOBIUSTASK", "DASHBOARD", "OPERATIONDASHBOARD", "REPORT", "URGENTTASK", "TEMPLATE"])
+        removeNoPermissionMenu(["TASK", "JOB", "INITIALPO", "INVOICE", "OPEN", "ARBITRATION", "HISTORY", "FUEL", "BUDGET", "MOBIUSTASK", "DASHBOARD", "OPERATIONDASHBOARD", "REPORT", "URGENTTASK", "TEMPLATE", "FEEDBACK"])
     }
 
     $(".navbar-nav li").eq(1).addClass("active");
@@ -238,6 +238,9 @@ function navTargetPage(target) {
             break;
         case 'TEMPLATE':
             $(".iframe-container").attr("src", "./templateIndent");
+            break;
+        case 'FEEDBACK':
+            $(".iframe-container").attr("src","./feedback");
             break;
         default:
             if (user && user.roleName != "TSP") {

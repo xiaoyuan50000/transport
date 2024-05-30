@@ -426,7 +426,7 @@ module.exports.getSafeFileName = function (p) {
 
 const apiLimiter = {
 	windowMs: 1 * 1000,
-	max: 10000,
+	max: 100,
 	message: "Too many requests from this client, please try again later.",
 }
 module.exports.apiLimiter = apiLimiter

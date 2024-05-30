@@ -44,7 +44,6 @@ const limiter = rateLimit({
 	max: utils.apiLimiter.max,
 	message: utils.apiLimiter.message,
 })
-app.use(limiter)
 
 const csrfProtection = csrf({ cookie: { secure: true, httpOnly: true } });
 
@@ -143,6 +142,7 @@ app.get('/home', home)
 app.get('/callback', callback)
 app.get('/mobile-callback', mobileCallback)
 
+app.use(limiter)
 
 
 // catch 404 and forward to error handler

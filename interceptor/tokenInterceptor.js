@@ -84,7 +84,7 @@ router.use(async (req, res, next) => {
 
     let loginPageUrl = getLoginPageUrl(req)
     let token = req.cookies.token
-    if (req.query.token || UrlWhiteList.includes(req.url) || req.url.startsWith('/mobileTO') || req.url.startsWith('/callback') || req.url.startsWith('/mobile-callback')) {
+    if (req.query.token || UrlWhiteList.includes(req.url) || req.url.startsWith('/mobileTO') || req.url.startsWith('/callback') || req.url.startsWith('/mobile-callback') || !token && req.url.startsWith('/CVIssues')) {
         return next();
     } else if (!token) {
         log.warn('There is no token !');
