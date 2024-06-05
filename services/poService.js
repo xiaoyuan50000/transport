@@ -159,20 +159,40 @@ const GetInvoiceByMonthly = async function (serviceProviderId, noOfMonth, start,
     //             ${filter}
     //             GROUP BY
     //                 b.serviceProviderId, monthly`
-    let contractPartNoList = await sequelizeObj.query(
-        `SELECT
-        b.contractPartNo
-    FROM
-        contract a
-    LEFT JOIN contract_detail b ON a.contractNo = b.contractNo
-    WHERE
-        FIND_IN_SET('monthly', a.poType)
-    AND b.contractPartNo IS NOT NULL`,
-        {
-            type: QueryTypes.SELECT,
-        }
-    );
-    let contractPartNoStr = "," + contractPartNoList.map(a => a.contractPartNo).join(",|,") + ","
+    // let contractPartNoList = await sequelizeObj.query(
+    //     `SELECT
+    //     b.contractPartNo
+    // FROM
+    //     contract a
+    // LEFT JOIN contract_detail b ON a.contractNo = b.contractNo
+    // WHERE
+    //     FIND_IN_SET('monthly', a.poType)
+    // AND b.contractPartNo IS NOT NULL`,
+    //     {
+    //         type: QueryTypes.SELECT,
+    //     }
+    // );
+    // let contractPartNoStr = "," + contractPartNoList.map(a => a.contractPartNo).join(",|,") + ","
+    // let sql = `SELECT
+    //                 b.serviceProviderId as id,
+    //                 DATE_FORMAT(b.executionDate, '%Y-%m') monthly,
+    //                 DATE_FORMAT(b.executionDate, '%m') noOfMonth,
+    //                 '' AS requestId,
+    //                 GROUP_CONCAT(b.id) as taskIds,
+    //                 b.poNumber,
+    //                 count(b.id) AS noOfTrips,
+    //                 0 as iamounts
+    //             FROM
+    //                 job_task b
+    //             LEFT JOIN job f ON b.tripId = f.id
+    //             WHERE
+    //             b.endorse = 1
+    //             AND b.taskStatus != 'declined'
+    //             AND b.serviceProviderId is not null
+    //             AND CONCAT(',',REPLACE(b.contractPartNo,',',',|,'),',') REGEXP '${contractPartNoStr}'
+    //             ${filter}
+    //             GROUP BY
+    //             b.serviceProviderId, monthly`
     let sql = `SELECT
                     b.serviceProviderId as id,
                     DATE_FORMAT(b.executionDate, '%Y-%m') monthly,
@@ -189,7 +209,10 @@ const GetInvoiceByMonthly = async function (serviceProviderId, noOfMonth, start,
                 b.endorse = 1
                 AND b.taskStatus != 'declined'
                 AND b.serviceProviderId is not null
-                AND CONCAT(',',REPLACE(b.contractPartNo,',',',|,'),',') REGEXP '${contractPartNoStr}'
+                AND COALESCE(SUBSTRING_INDEX(b.contractPartNo, ',', 1), null) 
+                        in (SELECT b.contractPartNo FROM contract a
+                        INNER JOIN contract_detail b ON a.contractNo = b.contractNo
+                        WHERE a.poType != 'monthly')
                 ${filter}
                 GROUP BY
                 b.serviceProviderId, monthly`

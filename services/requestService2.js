@@ -116,6 +116,11 @@ module.exports.CreateIndent = async function (req, res) {
         periodStartDate, periodEndDate, driver, tripRemarks, serviceMode, serviceType, preParkDate
     } = req.body.trip
 
+    let valid = validIndentFieldLength(tripRemarks, additionalRemarks, pickupNotes, dropoffNotes, pocName, contactNumber)
+    if (!valid.success) {
+        return Response.error(res, valid.message)
+    }
+
     let user = await GetUserInfo(createdBy)
     // if (user.groupName == null) {
     //     return Response.error(res, UnitError);
@@ -893,14 +898,21 @@ module.exports.EditTrip = async function (req, res) {
             periodStartDate, periodEndDate, driver, repeats, tripRemarks, serviceMode, serviceType, preParkDate, additionalRemarks
         } = req.body
         
-        if (tripRemarks.length > 1100) {
-            return Response.error(res, 'Please make sure the Trip Remarks field length does not exceed 1100.')
+        let valid = validIndentFieldLength(tripRemarks, "", pickupNotes, dropoffNotes, pocName, contactNumber)
+        if (!valid.success) {
+            return Response.error(res, valid.message)
         }
 
         let user = await GetUserInfo(createdBy)
         let roleName = user.roleName
 
         let trip = await Job2.findByPk(tripId)
+
+        let tripStatusUpdated = checkTripStatusUpdated([trip], roleName)
+        if (tripStatusUpdated.length > 0) {
+            return Response.error(res, 'Cannot not edit. Because the trip status has been updated.')
+        }
+
         let oldTripId = trip.id
         let requestId = trip.requestId
         let instanceId = trip.instanceId
@@ -1850,6 +1862,17 @@ const SendAndGet3rdData = async function (task, trip, serviceProviderId, optTime
     return contractPartNo
 }
 
+const checkTripStatusUpdated = function (trips, roleName) {
+    let result = []
+    for (let trip of trips) {
+        let status = trip.status ? trip.status.toLowerCase() : trip.status
+        if ((status == INDENT_STATUS.WAITAPPROVEDRF.toLowerCase() || status == INDENT_STATUS.APPROVED.toLowerCase()) && (roleName == ROLE.RQ || roleName == ROLE.UCO)) {
+            result.push(trip.tripNo)
+        }
+    }
+    return result
+}
+
 module.exports.BulkCancel = async function (req, res) {
     try {
         let { tripIds, remark, roleName, userId } = req.body;
@@ -1860,6 +1883,11 @@ module.exports.BulkCancel = async function (req, res) {
                 }
             }
         })
+
+        let tripStatusUpdated = checkTripStatusUpdated(trips, roleName)
+        if (tripStatusUpdated.length > 0) {
+            return Response.error(res, 'Cannot not edit. Because some trip status has been updated.<br>' + tripStatusUpdated.map(a => a + "<br>"))
+        }
 
         let cannotCancelTripNos = await DoBulkCancel(trips, roleName, remark, userId)
         if (cannotCancelTripNos.length > 0) {
@@ -3357,5 +3385,54 @@ const createFuelIndentByTemplate = async function (indentId, createdBy, roleName
                 await RecordOperationHistory(indentId, tripId, null, createdBy, INDENT_STATUS.WAITAPPROVEDUCO, OperationAction.NewTrip, "")
             }
         })
+    }
+}
+
+const validIndentFieldLength = function (tripRemarks, additionalRemarks, pickupNotes, dropoffNotes, pocName, contactNumber) {
+    if (tripRemarks && tripRemarks.length > 1100) {
+        return {
+            success: 0,
+            message: 'Trip Remarks must be less than or equal 1100 characters.'
+        }
+    }
+
+    if (additionalRemarks && additionalRemarks.length > 511) {
+        return {
+            success: 0,
+            message: 'Activity Name must be less than or equal 511 characters.'
+        }
+    }
+
+    if (pickupNotes && pickupNotes.length > 500) {
+        return {
+            success: 0,
+            message: 'Reporting Location Notes must be less than or equal 500 characters.'
+        }
+    }
+
+    if (dropoffNotes && dropoffNotes.length > 500) {
+        return {
+            success: 0,
+            message: 'Destination Notes must be less than or equal 500 characters.'
+        }
+    }
+
+    if (pocName && pocName.length > 200) {
+        return {
+            success: 0,
+            message: 'POC must be less than or equal 200 characters.'
+        }
+    }
+
+    if (contactNumber && contactNumber.length != 8 && ["8", "9"].indexOf(contactNumber.substring(0, 1)) == -1) {
+        return {
+            success: 0,
+            message: 'Mobile Number must be 8 number and start with 8 or 9.'
+        }
+    }
+
+    return {
+        success: 1,
+        message: ''
     }
 }

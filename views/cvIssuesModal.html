@@ -1,0 +1,35 @@
+<div class="modal fade" id="cvIssuesModal" data-bs-backdrop="static" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content border-0">
+            <div class="modal-header modal-header-background">
+                <h5 class="modal-title"></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <iframe id="cvissues-iframe" src="about:blank" class="w-100" style="height: 560px;"></iframe>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const cvIssuesModal = document.getElementById('cvIssuesModal')
+    cvIssuesModal.addEventListener('hidden.bs.modal', function (event) {
+        const iframe = document.getElementById('cvissues-iframe');
+        iframe.src = 'about:blank';
+    })
+    cvIssuesModal.addEventListener('show.bs.modal', function (event) {
+        let button = event.relatedTarget
+        let modalTitle = cvIssuesModal.querySelector('.modal-title')
+        let title = button.getAttribute('data-bs-title')
+        modalTitle.textContent = title
+
+        const iframe = document.getElementById('cvissues-iframe');
+        iframe.onload = function () {
+            if (title == "CV Issues") {
+                iframe.style.height = '440px';
+            }
+        };
+        iframe.src = '/CVIssues';
+    })
+</script>

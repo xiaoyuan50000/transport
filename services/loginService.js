@@ -37,7 +37,7 @@ const checkLoginUser = async function (loginName, password) {
     } else {
         user = await User.findOne({ where: { loginName: loginName } });
         if (!user) {
-            let { code, errorMsg } = await getUserExistByLoginName(loginName)
+            let { code, errorMsg } = await getUserExistByLoginName(loginName, null)
             if (code == 0) {
                 return { user: null, loginError: errorMsg }
             }
@@ -160,11 +160,17 @@ const deactivatedUser = async function (user) {
 }
 module.exports.deactivatedUser = deactivatedUser
 
-const getUserExistByLoginName = async function (loginName) {
+const getUserExistByLoginName = async function (loginName, fullname) {
+    let filter = ""
+    let replacements = [loginName]
+    if (fullname) {
+        filter += ` and fullName = ?`
+        replacements.push(fullname)
+    }
     let userBaseObj = await sequelizeDriverObj.query(
-        `select id, cvApproveDate, cvApproveBy, cvRejectBy from user_base where cvRole is not null and loginName = ? limit 1`,
+        `select id, cvApproveDate, cvApproveBy, cvRejectBy from user_base where cvRole is not null and loginName = ? ${filter} limit 1`,
         {
-            replacements: [loginName],
+            replacements: replacements,
             type: QueryTypes.SELECT,
         }
     )
@@ -255,7 +261,7 @@ module.exports.loginUseSingpass = async function (req, res) {
     if (!user) {
         user = await User.findOne({ where: { loginName: loginName } });
         if (!user) {
-            let { code, errorMsg } = await getUserExistByLoginName(loginName)
+            let { code, errorMsg } = await getUserExistByLoginName(loginName, fullname)
             if (code == 0) {
                 return Response.error(res, errorMsg);
             }

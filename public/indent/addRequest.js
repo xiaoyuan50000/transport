@@ -502,7 +502,7 @@ const InitVehicleByServiceModeId = async function (serviceModeId) {
         $("#typeOfVehicle").append(`<option value="-">-</option>`)
     }
     for (let item of vehicleTypeSelect) {
-        $("#typeOfVehicle").append(top.DOMPurify.sanitize(`<option value="${item.typeOfVehicle}">${item.typeOfVehicle}</option>`))
+        $("#typeOfVehicle").append(DOMPurify.sanitize(`<option value="${item.typeOfVehicle}">${item.typeOfVehicle}</option>`))
     }
 }
 
@@ -534,7 +534,7 @@ const InitRecurring = async function () {
         for (let item of datas) {
             data += `<option value="${item.value}">${item.value}</option>`
         }
-        $("#repeats").append(top.DOMPurify.sanitize(data))
+        $("#repeats").append(DOMPurify.sanitize(data))
         if (optLength == 1) {
             $("#repeats").val(datas[0].value);
             ChangeRepeats(datas[0].value)
@@ -608,7 +608,7 @@ const filterCategory = function (category) {
     for (let item of filterServiceTypeList) {
         data += `<option value="${item.id}" data-category="${item.category}">${item.name}</option>`
     }
-    $ServiceType.append(top.DOMPurify.sanitize(data))
+    $ServiceType.append(DOMPurify.sanitize(data))
     $("#serviceMode").empty()
 
     // if (category == "MV") {
@@ -642,7 +642,7 @@ const initServiceMode = async function (serviceTypeId) {
         for (let item of datas) {
             data += `<option value="${item.id}" data-value="${item.value}" data-minHour="${item.minDur}">${item.name}</option>`
         }
-        $("#serviceMode").append(top.DOMPurify.sanitize(data));
+        $("#serviceMode").append(DOMPurify.sanitize(data));
     })
 }
 
@@ -654,7 +654,7 @@ const initPurposeMode = async function () {
         for (let item of datas) {
             data += `<option value="${item.name}" data-unit="${item.groupId}">${item.name}</option>`
         }
-        $PurposeType.append(top.DOMPurify.sanitize(data));
+        $PurposeType.append(DOMPurify.sanitize(data));
     })
 };
 
@@ -689,6 +689,12 @@ const ValidIndentForm = function (data) {
             simplyAlert(errorLabel[key] + " is required.")
             return false
         }
+    }
+    
+    let additionalRemarks = data["additionalRemarks"]
+    if (additionalRemarks.length > 511) {
+        simplyAlert('Activity Name must be less than or equal 511 characters.')
+        return false
     }
     return true
 }
@@ -918,8 +924,55 @@ const validateFormRequiredField = function (data) {
     }
     return true
 }
+const validIndentFieldLength = function (tripRemarks, pickupNotes, dropoffNotes, pocName, contactNumber) {
+    if (tripRemarks && tripRemarks.length > 1100) {
+        return {
+            success: 0,
+            message: 'Trip Remarks must be less than or equal 1100 characters.'
+        }
+    }
+
+    if (pickupNotes && pickupNotes.length > 500) {
+        return {
+            success: 0,
+            message: 'Reporting Location Notes must be less than or equal 500 characters.'
+        }
+    }
+
+    if (dropoffNotes && dropoffNotes.length > 500) {
+        return {
+            success: 0,
+            message: 'Destination Notes must be less than or equal 500 characters.'
+        }
+    }
+
+    if (pocName && pocName.length > 200) {
+        return {
+            success: 0,
+            message: 'POC must be less than or equal 200 characters.'
+        }
+    }
+
+    if (contactNumber && contactNumber.length != 8 && ["8", "9"].indexOf(contactNumber.substring(0, 1)) == -1) {
+        return {
+            success: 0,
+            message: 'Mobile Number must be 8 number and start with 8 or 9.'
+        }
+    }
+
+    return {
+        success: 1,
+        message: ''
+    }
+}
 const ValidTripForm = function (data, isEdit) {
     if (!validateFormRequiredField(data)) {
+        return false
+    }
+
+    let valid = validIndentFieldLength(data["tripRemarks"], data["pickupNotes"], data["dropoffNotes"], data["pocName"], data["contactNumber"])
+    if (!valid.success) {
+        simplyAlert(valid.message)
         return false
     }
 
@@ -1172,7 +1225,7 @@ const CreateIndentAndTrip = function () {
 }
 const ShowNextTrip = function (indentId) {
     const tripBtnId = Date.now()
-    $("body").append(top.DOMPurify.sanitize(`<button class="hidden" id="Trip-${tripBtnId}" data-bs-toggle="modal" data-bs-action="next-trip" data-bs-target="#tripModal" 
+    $("body").append(DOMPurify.sanitize(`<button class="hidden" id="Trip-${tripBtnId}" data-bs-toggle="modal" data-bs-action="next-trip" data-bs-target="#tripModal" 
         data-bs-indent="${indentId}"></button>`))
     $(`#Trip-${tripBtnId}`).trigger("click")
     $(`#Trip-${tripBtnId}`).remove()
@@ -1188,7 +1241,7 @@ const DuplicateTrip = function (tripId, indentId) {
     tripModal.hide()
     setTimeout(() => {
         const tripBtnId = Date.now()
-        $("body").append(top.DOMPurify.sanitize(`
+        $("body").append(DOMPurify.sanitize(`
             <button id="Trip-${tripBtnId}" data-bs-toggle="modal" data-bs-action="duplicate-trip" 
                 data-bs-target="#tripModal" data-bs-trip="${tripId}" data-bs-indent="${indentId}">123</button>
         `))

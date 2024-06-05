@@ -58,12 +58,12 @@ function dateList() {
 const addTestDatas = async function () {
     try {
         let additionalRemarks = 'ff'
-        let createdByArr = [6, 7, 18, 19]
+        let createdByArr = [6]
 
-        let purposeType = 'Training - 1'
+        let purposeType = 'Training - ICT'
 
-        let locationList = ['Yio Chu Kang MRT', 'Hawker Centre', 'Zhenghua', 'Kovan', 'Joo Koon', 'Mandai & 1', 'Ang Mo Kio 65', 'Layar', 'Catchment Hut', 'Jacaranda Entrance']
-        let typeOfVehicleList = ['8-Seater Bus', '19-Seater Bus', '8-Seater Bus', '19-Seater Bus']
+        let locationList = ['Hawker Centre']
+        let typeOfVehicleList = ['10 Ton Box Truck with Power Tailgate (incl. Packing Service)']
         let pickupNotes = '1'
 
         let dropoffNotes = '1'
@@ -71,18 +71,18 @@ const addTestDatas = async function () {
         let noOfDriver = 0
         let pocName = '1'
         let contactNumber = '87654321'
-        let repeats = 'Once'
+        let repeats = 'Period'
         let repeatsOn = null
 
         let endsOn = null
-        let duration = 6
+        let duration = null
         let serviceProvider = null
         let periodStartDate = null
         let periodEndDate = null
         let driver = false
         let tripRemarks = '12'
-        let serviceMode = 1
-        let serviceType = 1
+        let serviceMode = 8
+        let serviceType = 10
         let preParkDate = null
         let datesArr = dateList()
         let dateArrLen = datesArr.length - 1
@@ -92,8 +92,8 @@ const addTestDatas = async function () {
         for (let i = 0; i < 4000; i++) {
             console.log(i)
             let executionDate = datesArr[randomRange(0, dateArrLen)]
-            let typeOfVehicle = typeOfVehicleList[randomRange(0, 3)]
-            let createdBy = createdByArr[randomRange(0, 3)]
+            let typeOfVehicle = typeOfVehicleList[0]
+            let createdBy = createdByArr[0]
             let groupSelectId = 1
             let user = await requestService.GetUserInfo(createdBy)
 
@@ -114,11 +114,13 @@ const addTestDatas = async function () {
             })
             await requestService.RecordOperationHistory(indentId, null, null, createdBy, "", OperationAction.NewIndent, "")
 
-            let pickupDestination = locationList[randomRange(0, 9)]
-            let dropoffDestination = locationList[randomRange(0, 9)]
+            let pickupDestination = locationList[0]
+            let dropoffDestination = locationList[0]
             let executionTime = '11:00'
             let noOfVehicle = randomRange(1, 4)
 
+            periodStartDate= `${executionDate} ${executionTime}`
+            periodEndDate = moment(periodStartDate).add(9,'hour').format('YYYY-MM-DD HH:mm')
             await CreateTripByRepeats(indent, pickupDestination, pickupNotes, dropoffDestination, dropoffNotes, typeOfVehicle, Number(noOfVehicle), Number(noOfDriver), pocName, contactNumber,
                 repeats, repeatsOn, executionDate, executionTime, endsOn, periodStartDate, periodEndDate, duration, serviceProvider, user, driver, tripRemarks,
                 serviceMode, serviceType, preParkDate)
@@ -288,19 +290,35 @@ const UpdateIndentInfo = async function (requestId, additionalRemarks = null) {
     })
 }
 
+const chooseTSP = async function(){
+    let results =await Task2.findAll({
+        where:{
+            tripId: {
+                [Op.gte]: 36067
+            }
+        }
+    })
+    for(let row of results){
+        let job = await Job2.findByPk(row.tripId)
+        await requestService.DoUpdateTSPAndApprove(row.selectableTsp, '2024-06-04 14:41:00', 6, row, job)
+    }
+}
+chooseTSP()
+
 function startRun() {
     addTestDatas()
-    addTestDatas()
-    addTestDatas()
-    addTestDatas()
-    addTestDatas()
-    addTestDatas()
-    addTestDatas()
-    addTestDatas()
-    addTestDatas()
-    addTestDatas()
+    // addTestDatas()
+    // addTestDatas()
+    // addTestDatas()
+    // addTestDatas()
+    // addTestDatas()
+    // addTestDatas()
+    // addTestDatas()
+    // addTestDatas()
+    // addTestDatas()
 }
 // startRun()
+
 // const csv = require('fast-csv');
 // const fs = require('fs');
 // const addUsers = async function () {

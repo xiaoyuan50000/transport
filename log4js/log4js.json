@@ -1,4 +1,5 @@
 {
+  "pm2": true,
   "appenders": {
     "info": {
       "type": "dateFile",

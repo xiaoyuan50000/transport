@@ -9,7 +9,7 @@ $(function() {
             for(let item of tsp) {
                 optionHtml += `<option value=${item.id}>${item.name}</option>`;
             }
-            $("#batchAssignTspSelect").append(top.DOMPurify.sanitize(optionHtml));
+            $("#batchAssignTspSelect").append(DOMPurify.sanitize(optionHtml));
         }
     })
     axios.post("/getMobiusUnit").then(async res => {
@@ -28,8 +28,8 @@ $(function() {
                 optionHtml1 += `<option value=${item.id}>${item.subUnit}</option>`;
             }
         }
-        $("#hubSelect").append(top.DOMPurify.sanitize(optionHtml));
-        $("#nodeSelect").append(top.DOMPurify.sanitize(optionHtml1));
+        $("#hubSelect").append(DOMPurify.sanitize(optionHtml));
+        $("#nodeSelect").append(DOMPurify.sanitize(optionHtml1));
     })
     if (roleName == 'RF' || roleName == OCCMGR) {
         $(".assign-tsp-div").show();

@@ -100,7 +100,7 @@ const changeTemplateCategory = function (e) {
     for (let item of filterServiceTypeList) {
         data += `<option value="${item.id}" data-category="${item.category}">${item.name}</option>`
     }
-    templateResourceTypeElem.append(top.DOMPurify.sanitize(data))
+    templateResourceTypeElem.append(DOMPurify.sanitize(data))
     templateServiceModeElem.empty()
 }
 
@@ -116,7 +116,7 @@ const initTemplateServiceMode = async function (serviceTypeId) {
         for (let item of datas) {
             data += `<option value="${item.id}" data-value="${item.value}" data-minHour="${item.minDur}">${item.name}</option>`
         }
-        templateServiceModeElem.append(top.DOMPurify.sanitize(data));
+        templateServiceModeElem.append(DOMPurify.sanitize(data));
     })
 }
 
@@ -124,13 +124,13 @@ const changeTemplateServiceMode = async function (serviceModeId) {
     // init resource
     let vehicleTypeSelect = await InitVehicleType(serviceModeId)
     templateResourceElem.empty();
-    templateResourceElem.append(top.DOMPurify.sanitize(`<option value=""></option>`))
+    templateResourceElem.append(DOMPurify.sanitize(`<option value=""></option>`))
 
     if ($(`#template-indent-category-radio input[type=radio][value="MV"]`).prop("checked")) {
-        templateResourceElem.append(top.DOMPurify.sanitize(`<option value="-">-</option>`))
+        templateResourceElem.append(DOMPurify.sanitize(`<option value="-">-</option>`))
     }
     for (let item of vehicleTypeSelect) {
-        templateResourceElem.append(top.DOMPurify.sanitize(`<option value="${item.typeOfVehicle}">${item.typeOfVehicle}</option>`))
+        templateResourceElem.append(DOMPurify.sanitize(`<option value="${item.typeOfVehicle}">${item.typeOfVehicle}</option>`))
     }
 
     // init recurring

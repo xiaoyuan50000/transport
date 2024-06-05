@@ -54,7 +54,7 @@ async function index(req, res) {
     let loginName = utils.GetLoginName(nric, name)
     log.info(`LoginName: ${loginName}, FullName: ${name}`)
 
-    let userBase = await loginService.getUserExistByLoginName(loginName)
+    let userBase = await loginService.getUserExistByLoginName(loginName, name)
     if (userBase.code == 0) {
       return res.render('login', { title: 'Login', error: userBase.errorMsg })
     }

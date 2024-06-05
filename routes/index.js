@@ -432,16 +432,16 @@ router.post('/initFeedbackTable', feedbackService.initFeedbackTable)
 router.get('/CVIssues', async function (req, res, next) {
     let fullName = ""
     let email = ""
-    let subject = "login"
 
     let userId = req.body.userId
     if (userId) {
         let user = await requestService2.GetUserInfo(userId)
         fullName = user.username
         email = user.email
-        subject = ""
+        res.render('cvIssues', { fullName: fullName, email: email });
+    }else{
+        res.render('cvLoginIssues');
     }
-    res.render('cvIssues', { fullName: fullName, email: email, subject: subject });
 });
 
 module.exports = router;

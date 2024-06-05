@@ -221,7 +221,7 @@ const setChargeTypeTripHourAndOT = function (row, contractRateList, detail) {
                 detail.otBlockPrice = `${OTBlockPrice}(${otTime}hr)`
             }
             detail.blockPrice = `${blockPrice}(${totalDuration}hr)`
-            detail.total = detail.block + detail.afterBlock + detail.otBlock
+            detail.total = detail.block + detail.afterBlock + (detail.otBlock || 0)
         }
     }
 

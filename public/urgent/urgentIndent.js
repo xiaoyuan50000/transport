@@ -291,7 +291,7 @@ $(function () {
                     </div>
                 </li>`
             }
-            $("#urgentDriverHistory").html(top.DOMPurify.sanitize(`<ul class="custom-timeline">${html}</ul>`))
+            $("#urgentDriverHistory").html(DOMPurify.sanitize(`<ul class="custom-timeline">${html}</ul>`))
         })
     })
 })

@@ -146,17 +146,39 @@ module.exports.InitTable = async function (req, res) {
     //             GROUP BY
     //                 b.requestId,
     //                 b.serviceProviderId`
-    let contractPartNoList = await sequelizeObj.query(
-        `SELECT b.contractPartNo FROM
-        contract a
-    LEFT JOIN contract_detail b ON a.contractNo = b.contractNo
-    WHERE
-        a.poType != 'monthly' AND b.contractPartNo IS NOT NULL`,
-        {
-            type: QueryTypes.SELECT,
-        }
-    );
-    let contractPartNoStr = "," + contractPartNoList.map(a => a.contractPartNo).join(",|,") + ","
+    // let contractPartNoList = await sequelizeObj.query(
+    //     `SELECT b.contractPartNo FROM
+    //     contract a
+    // LEFT JOIN contract_detail b ON a.contractNo = b.contractNo
+    // WHERE
+    //     a.poType != 'monthly' AND b.contractPartNo IS NOT NULL`,
+    //     {
+    //         type: QueryTypes.SELECT,
+    //     }
+    // );
+    // let contractPartNoStr = "," + contractPartNoList.map(a => a.contractPartNo).join(",|,") + ","
+    // let sql = `SELECT
+    //                 b.requestId,
+    //                 b.poNumber,
+    //                 count(DISTINCT b.id) AS noOfTrips,
+    //                 GROUP_CONCAT(DISTINCT b.id) AS taskIds,
+    //                 b.serviceProviderId as id
+    //             FROM
+    //                 job_task b
+    //             LEFT JOIN job d ON b.tripId = d.id
+    //             LEFT JOIN request e ON b.requestId = e.id
+    //             WHERE
+    //                 b.serviceProviderId IS NOT NULL
+    //                 AND CONCAT(',',REPLACE(b.contractPartNo,',',',|,'),',') REGEXP '${contractPartNoStr}'
+    //                 and COALESCE(SUBSTRING_INDEX(b.contractPartNo, ',', 1), null) in (SELECT b.contractPartNo FROM
+    //     contract a
+    // LEFT JOIN contract_detail b ON a.contractNo = b.contractNo
+    // WHERE
+    //     a.poType != 'monthly' AND b.contractPartNo IS NOT NULL)
+    //                 ${filter}
+    //             GROUP BY
+    //                 b.requestId,
+    //                 b.serviceProviderId`
     let sql = `SELECT
                     b.requestId,
                     b.poNumber,
@@ -169,7 +191,10 @@ module.exports.InitTable = async function (req, res) {
                 LEFT JOIN request e ON b.requestId = e.id
                 WHERE
                     b.serviceProviderId IS NOT NULL
-                    AND CONCAT(',',REPLACE(b.contractPartNo,',',',|,'),',') REGEXP '${contractPartNoStr}'
+                    AND COALESCE(SUBSTRING_INDEX(b.contractPartNo, ',', 1), null) 
+                        in (SELECT b.contractPartNo FROM contract a
+                        INNER JOIN contract_detail b ON a.contractNo = b.contractNo
+                        WHERE a.poType != 'monthly')
                     ${filter}
                 GROUP BY
                     b.requestId,
