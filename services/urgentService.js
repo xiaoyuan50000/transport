@@ -32,12 +32,12 @@ const urgentIndentTimeList = ["09:30", "12:30", "15:00"]
 const urgentNotificationTitle = "Urgent Notification"
 const resourceList = ["Ford Everest OUV", "Agilis (Auto)", "5 Ton GS (Auto)", "6 Ton GS"]
 
-const getUnitId = function (user) {
+const getUnitId = function (user, unitId) {
     let roleName = user.roleName
     if (roleName == ROLE.RQ || roleName == ROLE.UCO) {
         return user.group || null
     }
-    return null
+    return unitId
 }
 
 
@@ -70,7 +70,7 @@ module.exports.CreateUrgentIndent = async function (req, res) {
         let createdBy = req.body.createdBy
         let user = await requestService.GetUserInfo(createdBy)
         let roleName = user.roleName
-        unitId = getUnitId(user)
+        unitId = getUnitId(user, unitId)
         let barredDate = await isGroupBarred(unitId)
         if (barredDate) {
             return Response.error(res, BarredDateError + barredDate)
@@ -1030,7 +1030,7 @@ module.exports.EditUrgentIndent = async function (req, res) {
         }
         let createdBy = req.body.createdBy
         let user = await requestService.GetUserInfo(createdBy)
-        unitId = getUnitId(user)
+        unitId = getUnitId(user, unitId)
         let groupObj = await Group.findByPk(unitId)
         let groupName = groupObj.groupName
 
@@ -1270,7 +1270,7 @@ const GetUrgentIndentInUse = async function (req, res) {
         let { unitId, resource, isEdit, taskId } = req.body
         let createdBy = req.body.createdBy
         let user = await requestService.GetUserInfo(createdBy)
-        unitId = getUnitId(user)
+        unitId = getUnitId(user, unitId)
         let groupObj = await Group.findByPk(unitId)
         let groupName = groupObj.groupName
 
@@ -1334,7 +1334,7 @@ module.exports.GetUnitLocation = async function (req, res) {
     let { unitId } = req.body
     let createdBy = req.body.createdBy
     let user = await requestService.GetUserInfo(createdBy)
-    unitId = getUnitId(user)
+    unitId = getUnitId(user, unitId)
 
     let group = await Group.findByPk(unitId)
     let locationId = group.locationId
