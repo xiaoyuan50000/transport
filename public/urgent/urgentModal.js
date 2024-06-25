@@ -235,7 +235,7 @@ const DisableByGroupAndVehicle = async function () {
                 taskId: currentSelectedTask ? currentSelectedTask.taskId : null
             }).then(res => {
                 if (res.data.code == 0) {
-                    parent.simplyError(data.msg)
+                    parent.simplyError(res.data.msg)
                 } else {
                     let data = res.data.data
                     timeList.forEach((val, index) => {

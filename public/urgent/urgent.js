@@ -1,4 +1,5 @@
 let isEdit = false
+let currentSelectedTask = null
 $(function () {
 
     urgentModal.addEventListener('hidden.bs.modal', function (event) {
