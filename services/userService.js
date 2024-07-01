@@ -807,7 +807,7 @@ module.exports.ConfirmActive = async function (req, res) {
 module.exports.GetUserExistByLoginName = async function (req, res) {
     let { nric, username } = req.body
     let loginName = utils.GetLoginName(nric, username)
-    let user = await User.findOne({ where: { loginName: loginName } })
+    let user = await User.findOne({ where: { loginName: loginName, username: username } })
     return res.json({ data: user != null })
 }
 

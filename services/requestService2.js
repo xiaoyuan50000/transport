@@ -1045,7 +1045,7 @@ const BeforeEditTrip = async function (trip, roleName, serviceType, createdBy) {
     let hasDriver = trip.driver
 
     let oldTrips = [trip]
-    let anotherTrip = getPeriodTrip(trip)
+    let anotherTrip = await getPeriodTrip(trip)
     oldTrips.push(...anotherTrip)
 
     let jobHistoryIds = []
@@ -1106,9 +1106,9 @@ const BeforeEditTrip = async function (trip, roleName, serviceType, createdBy) {
     }
 
     // ack
-    for (let task of taskAll) {
-        await atmsAckService.SaveCancelByTSPForATMSAck(task, createdBy)
-    }
+    // for (let task of taskAll) {
+    //     await atmsAckService.SaveCancelByTSPForATMSAck(task, createdBy)
+    // }
 
     await Task2.destroy({
         where: {
@@ -1296,9 +1296,9 @@ const DoEditTrip = async function (pickupDestination, pickupNotes, dropoffDestin
         pickupDestinationId = pickUpLocation.id
         dropoffDestinationId = dropOffLocation.id
         let vehicle = await sequelizeObj.query(
-            `select * from ngts_vehicle where serviceModeId = ? and serviceTypeId = ? limit 1`,
+            `select * from ngts_vehicle where serviceModeId = ? and serviceTypeId = ? and resourceType = ? limit 1`,
             {
-                replacements: [serviceModeId, serviceTypeId],
+                replacements: [serviceModeId, serviceTypeId, typeOfVehicle],
                 type: QueryTypes.SELECT
             }
         );
@@ -1388,7 +1388,7 @@ const DoEditTrip = async function (pickupDestination, pickupNotes, dropoffDestin
     }
 
     let updateObj = { status: newStatus, approve: approve }
-    if (isCreateWorkFlow) {
+    if (isCreateWorkFlow && newJob.instanceId != -1) {
         if (isRFOrOCC(roleName) && newJob.instanceId == null) {
             let instanceId = await WorkFlow.create(roleName, newTripId)
             updateObj.instanceId = instanceId
@@ -1417,6 +1417,10 @@ const DoEditTrip = async function (pickupDestination, pickupNotes, dropoffDestin
     for (let task of taskList) {
         await RecordOperationHistory(task.requestId, task.tripId, task.id, createdBy, TASK_STATUS.UNASSIGNED, TASK_STATUS.UNASSIGNED, "")
     }
+
+    // ack
+    await atmsAckService.SaveATMSAck(newJob, taskList, 'U', 'U', createdBy)
+
     return taskList
 }
 
@@ -1938,7 +1942,7 @@ const DoBulkCancel = async function (trips, roleName, remark, createdBy) {
 
     let needDeleteMVTasksId = []
     let needDeleteLoanMVTasksId = []
-    let { needCancelTrips, checkMVTrips } = getCancelTrips(trips)
+    let { needCancelTrips, checkMVTrips } = await getCancelTrips(trips)
 
     for (let trip of checkMVTrips) {
         let assignedTasks = await Task2.findAll({

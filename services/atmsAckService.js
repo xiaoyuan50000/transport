@@ -13,7 +13,7 @@ const { NGTSResp } = require('../model/ngtsResp');
 
 const getUserBaseId = async function (id) {
     let userBase = await sequelizeDriverObj.query(
-        `select id from user_base where mvUserId = ?`,
+        `select id from user_base where cvUserId = ?`,
         {
             replacements: [id],
             type: QueryTypes.SELECT

@@ -304,7 +304,7 @@ const getIsRandomUnit = function (temp, mobiusSubUnits) {
     for (let item of mobiusSubUnits) {
         if (item.group) {
             let unitGroupArray = item.group.split(',');
-            let existGroup = unitGroupArray.find(item1 => item1.toLowerCase() == temp.groupName.toLowerCase());
+            let existGroup = unitGroupArray.find(item1 => temp.groupName && item1.toLowerCase() == temp.groupName.toLowerCase());
             if (existGroup) {
                 isRandomUnit = 0;
                 break

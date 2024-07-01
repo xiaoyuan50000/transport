@@ -168,7 +168,7 @@ const getUserExistByLoginName = async function (loginName, fullname) {
         replacements.push(fullname)
     }
     let userBaseObj = await sequelizeDriverObj.query(
-        `select id, cvApproveDate, cvApproveBy, cvRejectBy from user_base where cvRole is not null and loginName = ? ${filter} limit 1`,
+        `select id, cvApproveDate, cvApproveBy, cvRejectBy from user_base where cvRole is not null and loginName = ? ${filter} order by createdAt desc limit 1`,
         {
             replacements: replacements,
             type: QueryTypes.SELECT,
