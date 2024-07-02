@@ -263,6 +263,7 @@ router.post('/indent/updateIndentStatus', indentService2.UpdateIndentStatus);
 router.post('/indent/updateMobiusUnit', requestService2.updateMobiusUnit);
 
 router.post('/getTypeOfVehicle', indentService2.GetTypeOfVehicle);
+router.post('/getATMSTypeOfVehicle', indentService2.GetATMSTypeOfVehicle);
 router.post('/getDestination', indentService2.GetDestination);
 router.post('/getPolPoint', indentService2.GetPolPoint);
 // router.post('/filterServiceProviderSelect', indentService2.FilterServiceProviderSelect);

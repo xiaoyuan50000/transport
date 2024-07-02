@@ -1058,9 +1058,9 @@ const GetActionInfoForJob = async function (drivers) {
         if (!(row.repeats == "Period" && !row.instanceId) && row.category.toUpperCase() != 'MV') {
             await setTSPSelect(row)
             row.cancel = tripCannotCancelStatus.indexOf(row.taskStatus.toLowerCase()) == -1
-        } 
+        }
         row.tspDisable = [INDENT_STATUS.WAITAPPROVEDUCO, INDENT_STATUS.WAITAPPROVEDRF].indexOf(row.tripStatus) != -1
-        
+
         if (row.category.toUpperCase() == 'MV' && row.vehicleType != "-" && row.hasDriver && !row.mobileStartTime && !row.cancellationTime && moment(row.endDate || row.startDate).isSameOrBefore(moment())) {
             row.cancel = true
         }
@@ -1236,7 +1236,21 @@ module.exports.GetTypeOfVehicle = async function (req, res) {
         );
         return res.json({ data: typeOfVehicleList })
     }
+}
 
+module.exports.GetATMSTypeOfVehicle = async function (req, res) {
+    let { serviceModeId } = req.body
+    let serviceMode = await ServiceMode.findByPk(serviceModeId)
+    let serviceType = await ServiceType.findByPk(serviceMode.service_type_id)
+    let group = serviceType.category.toUpperCase() == "CV" ? 'C' : 'M'
+    const typeOfVehicleList = await sequelizeObj.query(
+        `select DISTINCT resourceType as typeOfVehicle from ngts_vehicle where serviceModeId = ? and \`group\` = ? and \`status\` != 'D' order by resourceType`,
+        {
+            replacements: [serviceModeId, group],
+            type: QueryTypes.SELECT
+        }
+    );
+    return res.json({ data: typeOfVehicleList })
 }
 
 module.exports.GetDestination = async function (req, res) {

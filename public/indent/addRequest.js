@@ -13,7 +13,7 @@ let $tripContent = $("#tripContent")
 let tripHtml = $("#tripHtml").html()
 let fuelHtml = $("#fuelHtml").html()
 // let occ = ["OCC Mgr"]
-
+let isATMS = false
 
 let tripModal = new bootstrap.Modal(document.getElementById('tripModal'))
 $(function () {
@@ -28,6 +28,7 @@ $(function () {
         pickupNotes = ""
         dropoffNotes = ""
         CleanTemplateIndentHtml()
+        isATMS = false
     })
     tripModalElem.addEventListener('show.bs.modal', async function (event) {
         StopRefreshIndent()
@@ -78,7 +79,7 @@ $(function () {
             else {
                 let tripId = button.getAttribute('data-bs-trip')
                 let tripNo = button.getAttribute('data-bs-tripno')
-
+                // console.log(tripNo);
                 initTripAction2(action, indentId, modalTitle, tripNo, tripId)
 
             }
@@ -170,6 +171,7 @@ const PurposeTrainingDisabledMV = function () {
 
 const SetTripDatas = async function (tripId) {
     let trip = await GetTripById(tripId)
+    isATMS = trip.referenceId !== undefined && trip.referenceId !== null;
     pickupNotes = trip.pickupNotes
     dropoffNotes = trip.dropoffNotes
     // console.log(trip)
@@ -487,7 +489,8 @@ const CleanTripForm = function () {
 }
 
 const InitVehicleType = async function (serviceModeId = null) {
-    return await axios.post("/getTypeOfVehicle", { serviceModeId: serviceModeId }).then(res => {
+    let url = isATMS ? '/getATMSTypeOfVehicle' : '/getTypeOfVehicle'
+    return await axios.post(url, { serviceModeId: serviceModeId }).then(res => {
         return res.data.data
     })
 }
@@ -690,7 +693,7 @@ const ValidIndentForm = function (data) {
             return false
         }
     }
-    
+
     let additionalRemarks = data["additionalRemarks"]
     if (additionalRemarks.length > 511) {
         simplyAlert('Activity Name must be less than or equal 511 characters.')
