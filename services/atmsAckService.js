@@ -11,6 +11,7 @@ const { Vehicle } = require('../model/vehicle');
 const { Job2 } = require('../model/job2');
 const { NGTSResp } = require('../model/ngtsResp');
 
+const fmt = 'YYYY-MM-DD HH:mm:ss'
 const getUserBaseId = async function (id) {
     let userBase = await sequelizeDriverObj.query(
         `select id from user_base where cvUserId = ?`,
@@ -56,8 +57,8 @@ const SaveATMSAck = async function (trip, tasks, transacationType, ngtsJobStatus
     for (let task of tasks) {
         let driverId = task.driverId
         let { driverName, driverMobileNumber, vehicleNumber } = await getDriverInfo(task)
-        let startDate = moment(task.startDate).format("YYYY-MM-DD HH:mm:ss")
-        let endDate = task.endDate ? moment(task.endDate).format("YYYY-MM-DD HH:mm:ss") : null
+        let startDate = moment(task.startDate).format(fmt)
+        let endDate = task.endDate ? moment(task.endDate).format(fmt) : null
 
         let preparkQuantity = 0
         let preparkDateTime = null
@@ -140,4 +141,53 @@ module.exports.SaveTSPAssignedForATMSAck = async function (task) {
         return
     }
     await SaveATMSAck(trip, [task], 'R', 'U', null)
+}
+
+module.exports.SaveATMSTripAck = async function (trip, transacationType, ngtsJobStatus, createdBy) {
+    if (!trip.referenceId) {
+        return
+    }
+    
+    let { referenceId, resourceId, pocUnitCode, pickupDestinationId, dropoffDestinationId, tripNo, serviceModeId } = trip
+    let serviceMode = await ServiceMode.findByPk(serviceModeId)
+    let serviceModeName = serviceMode.name
+
+    let userBaseId = null
+    if (createdBy) {
+        userBaseId = await getUserBaseId(createdBy)
+    }
+
+    let isPrepark = trip.preParkDate && !trip.instanceId
+    let record = {
+        atmsTaskId: null,
+        ngtsTripId: tripNo,
+        referenceId: referenceId,
+        transacationType: transacationType,
+        transacationDateTime: new Date(),
+        responseStatus: 'A',
+        serviceMode: serviceModeName,
+        resourceId: resourceId,
+        resourceQuantity: trip.noOfVehicle,
+        startDateTime: isPrepark ? moment(trip.preParkDate).format(fmt) : moment(trip.periodStartDate).format(fmt),
+        endDateTime: isPrepark ? moment(trip.periodStartDate).format(fmt) : moment(trip.periodEndDate).format(fmt),
+        pocUnitCode: pocUnitCode,
+        pocName: trip.poc,
+        pocMobileNumber: trip.pocNumber,
+        reportingLocationId: pickupDestinationId,
+        destinationLocationId: dropoffDestinationId,
+        preparkQuantity: isPrepark ? trip.noOfVehicle : 0,
+        preparkDateTime: isPrepark ? moment(trip.preParkDate).format(fmt) : null,
+        ngtsJobId: trip.id,
+        ngtsJobStatus: ngtsJobStatus,
+        driverId: null,
+        driverName: "",
+        driverMobileNumber: "",
+        vehicleNumber: "",
+        operatorId: userBaseId,
+        isSend: 'N',
+        trackingId: null
+    }
+
+    await NGTSResp.create(record)
+
 }

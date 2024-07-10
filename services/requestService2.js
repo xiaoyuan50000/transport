@@ -113,7 +113,7 @@ module.exports.CreateIndent = async function (req, res) {
     let {
         pickupDestination, pickupNotes, dropoffDestination, dropoffNotes, typeOfVehicle, noOfVehicle, noOfDriver, pocName, contactNumber,
         repeats, repeatsOn, executionDate, executionTime, endsOn, duration, serviceProvider,
-        periodStartDate, periodEndDate, driver, tripRemarks, serviceMode, serviceType, preParkDate
+        periodStartDate, periodEndDate, driver, tripRemarks, serviceMode, serviceType, preParkDate, preParkQty
     } = req.body.trip
 
     let valid = validIndentFieldLength(tripRemarks, additionalRemarks, pickupNotes, dropoffNotes, pocName, contactNumber)
@@ -152,7 +152,7 @@ module.exports.CreateIndent = async function (req, res) {
 
     await CreateTripByRepeats(indent, pickupDestination, pickupNotes, dropoffDestination, dropoffNotes, typeOfVehicle, Number(noOfVehicle), Number(noOfDriver), pocName, contactNumber,
         repeats, repeatsOn, executionDate, executionTime, endsOn, periodStartDate, periodEndDate, duration, serviceProvider, user, driver, tripRemarks,
-        serviceMode, serviceType, preParkDate)
+        serviceMode, serviceType, preParkDate, preParkQty)
 
     await UpdateIndentInfo(indentId)
     let mv = await IsCategoryMV(serviceType)
@@ -211,7 +211,7 @@ module.exports.CreateIndent = async function (req, res) {
 
 const CreateTripByRepeats = async function (indent, pickupDestination, pickupNotes, dropoffDestination, dropoffNotes, typeOfVehicle, noOfVehicle, noOfDriver, pocName, contactNumber,
     repeats, repeatsOn, executionDate, executionTime, endsOn, periodStartDate, periodEndDate, duration, serviceProvider, user, driver, tripRemarks,
-    serviceModeId, serviceTypeId, preParkDate) {
+    serviceModeId, serviceTypeId, preParkDate, preParkQty) {
     let serviceProviderId = serviceProvider
     let tripNo = await GetTripNo(indent.id)
     let serviceMode = await ServiceMode.findByPk(serviceModeId)
@@ -232,6 +232,7 @@ const CreateTripByRepeats = async function (indent, pickupDestination, pickupNot
             let periodExecutionEndDate = moment(preParkDate).format(fmt)
             let periodExecutionEndTime = moment(preParkDate).format(fmt1)
             dropoffDestination = pickupDestination
+            noOfVehicle = preParkQty || noOfVehicle
             await DoCreateTrip(indent, serviceProviderId, pickupDestination, pickupNotes, dropoffDestination, dropoffNotes, typeOfVehicle, noOfVehicle, noOfDriver,
                 pocName, contactNumber, repeats, periodExecutionEndDate, periodExecutionEndTime, null, user, driver, tripNo, periodStartDate, periodEndDate, false,
                 tripRemarks, serviceMode, serviceTypeId, "", "", preParkDate)
@@ -372,7 +373,7 @@ module.exports.CreateTrip = async function (req, res) {
     let {
         pickupDestination, pickupNotes, dropoffDestination, dropoffNotes, typeOfVehicle, noOfVehicle, noOfDriver, pocName, contactNumber,
         repeats, repeatsOn, executionDate, executionTime, endsOn, periodStartDate, periodEndDate, duration,
-        indentId, createdBy, serviceProvider, driver, tripRemarks, serviceMode, serviceType, preParkDate
+        indentId, createdBy, serviceProvider, driver, tripRemarks, serviceMode, serviceType, preParkDate, preParkQty
     } = req.body
 
     let user = await GetUserInfo(createdBy)
@@ -390,7 +391,7 @@ module.exports.CreateTrip = async function (req, res) {
 
     await CreateTripByRepeats(indent, pickupDestination, pickupNotes, dropoffDestination, dropoffNotes, typeOfVehicle, Number(noOfVehicle), Number(noOfDriver), pocName, contactNumber,
         repeats, repeatsOn, executionDate, executionTime, endsOn, periodStartDate, periodEndDate, duration, serviceProvider, user, driver, tripRemarks,
-        serviceMode, serviceType, preParkDate)
+        serviceMode, serviceType, preParkDate, preParkQty)
 
     await UpdateIndentInfo(indentId)
 
@@ -895,7 +896,7 @@ module.exports.EditTrip = async function (req, res) {
         let {
             pickupDestination, pickupNotes, dropoffDestination, dropoffNotes, typeOfVehicle, noOfVehicle, noOfDriver, pocName,
             contactNumber, executionDate, executionTime, duration, tripId, createdBy, serviceProvider, remark,
-            periodStartDate, periodEndDate, driver, repeats, tripRemarks, serviceMode, serviceType, preParkDate, additionalRemarks
+            periodStartDate, periodEndDate, driver, repeats, tripRemarks, serviceMode, serviceType, preParkDate, additionalRemarks, preParkQty
         } = req.body
         
         let valid = validIndentFieldLength(tripRemarks, "", pickupNotes, dropoffNotes, pocName, contactNumber)
@@ -963,6 +964,7 @@ module.exports.EditTrip = async function (req, res) {
                 let periodExecutionEndDate = moment(preParkDate).format(fmt)
                 let periodExecutionEndTime = moment(preParkDate).format(fmt1)
                 dropoffDestination = pickupDestination
+                noOfVehicle = preParkQty || noOfVehicle
                 taskList2 = await DoEditTrip(pickupDestination, pickupNotes, dropoffDestination, dropoffNotes, typeOfVehicle, noOfVehicle, noOfDriver, pocName,
                     contactNumber, periodExecutionEndDate, periodExecutionEndTime, null, createdBy, serviceProviderId, remark, roleName,
                     periodStartDate, periodEndDate, driver, user, tripRemarks, serviceMode, serviceType, repeats,
@@ -1419,7 +1421,7 @@ const DoEditTrip = async function (pickupDestination, pickupNotes, dropoffDestin
     }
 
     // ack
-    await atmsAckService.SaveATMSAck(newJob, taskList, 'U', 'U', createdBy)
+    await atmsAckService.SaveATMSTripAck(newJob, 'U', 'U', createdBy)
 
     return taskList
 }
@@ -2021,7 +2023,7 @@ const Cancelled = async function (trip, createdBy) {
         }
     })
     // ack
-    await atmsAckService.SaveATMSAck(trip, tasks, 'C', 'C', createdBy)
+    await atmsAckService.SaveATMSTripAck(trip, 'C', 'C', createdBy)
 
     await CancelledTasksByExternalJobId(tasks, createdBy)
     // wog
@@ -3331,12 +3333,12 @@ module.exports.CreateIndentByTemplate = async function (req, res) {
             let {
                 pickupDestination, pickupNotes, dropoffDestination, dropoffNotes, typeOfVehicle, noOfVehicle, noOfDriver, pocName, contactNumber,
                 repeats, repeatsOn, executionDate, executionTime, endsOn, duration, serviceProvider,
-                periodStartDate, periodEndDate, driver, tripRemarks, serviceMode, serviceType, preParkDate
+                periodStartDate, periodEndDate, driver, tripRemarks, serviceMode, serviceType, preParkDate, preParkQty
             } = trip
 
             let tripNo = await CreateTripByRepeats(indent, pickupDestination, pickupNotes, dropoffDestination, dropoffNotes, typeOfVehicle, Number(noOfVehicle), Number(noOfDriver), pocName, contactNumber,
                 repeats, repeatsOn, executionDate, executionTime, endsOn, periodStartDate, periodEndDate, duration, serviceProvider, user, driver, tripRemarks,
-                serviceMode, serviceType, preParkDate)
+                serviceMode, serviceType, preParkDate, preParkQty)
 
             await updateMVIndentByTemplate(serviceType, indentId, tripNo, typeOfVehicle, driver, user)
         }

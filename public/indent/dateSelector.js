@@ -297,6 +297,11 @@ const InitPreParkDateSelector = function () {
             done: (value) => {
                 value = parent.changeDateFormat(value)
 
+                if (!value) {
+                    showPreParkQty(false)
+                    return
+                }
+
                 let periodStartDate = $("#periodStartDate").val()
                 if (periodStartDate) {
                     periodStartDate = parent.changeDateFormat(periodStartDate)
@@ -307,8 +312,14 @@ const InitPreParkDateSelector = function () {
                             content: 'Pre-Park Date should be earlier than Start Date!',
                         });
                         $('#preParkDate').val(null)
+                        showPreParkQty(false)
+                    } else if (value) {
+                        showPreParkQty(true)
                     }
+                    return
                 }
+
+                showPreParkQty(true)
             }
         }
         if (roleName != "RF") {

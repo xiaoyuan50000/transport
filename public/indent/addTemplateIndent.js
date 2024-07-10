@@ -165,7 +165,12 @@ const setDataWithTrip = async function (data) {
     //         }
     //     })
     // }
-
+    if (trip.preParkDate) {
+        showPreParkQty(true)
+        $("#preParkQty").val(trip.preParkQty)
+    } else {
+        showPreParkQty(false)
+    }
     CheckExecutionDateWithin5days(trip.executionDate)
     if (trip.tripRemarks) {
         $("#tripRemarks").val(trip.tripRemarks)
@@ -246,6 +251,11 @@ const saveTemplateIndent = function () {
                 }
                 if (resource == "-") {
                     trip.preParkDate = null
+                    trip.preParkQty = null
+                }
+
+                if (trip.preParkDate) {
+                    trip.preParkQty = activeIndentRow.trip.preParkQty
                 }
 
                 if (category == "CV" && ["1-way", "ferry service"].indexOf(activeIndentRow.serviceMode.toLowerCase()) != -1 && ["1-way", "ferry service"].indexOf(serviceMode.toLowerCase()) == -1
@@ -275,7 +285,7 @@ const submitCreateIndent = async function (indentId = null) {
             tripList.push(row.trip)
         }
     }
-    
+
     if (tripList.length != templateIndentRowList.length) {
         simplyAlert('Please complete all template indents!');
         return
@@ -308,7 +318,7 @@ const submitCreateTrip = async function (indentId) {
             tripList.push(row.trip)
         }
     }
-    
+
     if (tripList.length != templateIndentRowList.length) {
         simplyAlert('Please complete all template indents!');
         return

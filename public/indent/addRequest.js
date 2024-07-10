@@ -229,6 +229,11 @@ const SetTripDatas = async function (tripId) {
         await changeTypeOfVehicle(trip.vehicleType)
         $("#noOfVehicle").val(trip.noOfVehicle)
 
+        if (trip.preParkDate) {
+            showPreParkQty(true)
+            $("#preParkQty").val(trip.preParkQty)
+        }
+
         OnCheckDriver(trip.driver)
         if (trip.driver) {
             $("#noOfDriver").val(trip.noOfDriver);
@@ -711,7 +716,7 @@ const GetTripDatas = function () {
         repeats: '', executionDate: '',
         executionTime: '', periodStartDate: '',
         periodEndDate: '', endsOn: '',
-        preParkDate: null
+        preParkDate: null,
     }
     let formData = serializeToJson($("#task-form").serializeArray())
     for (let i in formData) {
@@ -759,7 +764,9 @@ const GetTripDatas = function () {
     data.periodEndDate = parent.changeDateFormat(data.periodEndDate)
     data.endsOn = parent.changeDateFormat(data.endsOn)
     data.preParkDate = parent.changeDateFormat(data.preParkDate)
-
+    if (data.preParkDate) {
+        data.preParkQty = $("#preParkQty").val()
+    }
     console.log(data)
     return data
 }
@@ -790,7 +797,7 @@ const AddTripWithoutTemplate = function (indentId) {
     } else {
         let data = GetTripDatas()
         let isOK = ValidTripForm(data)
-        // console.log(data)
+        console.log(data)
         // return
         if (isOK) {
             data.indentId = indentId
@@ -904,7 +911,7 @@ const validateRequiredField = (data, key) => {
         noOfDriver: 'No. Of Driver',
         serviceProvider: 'Service Provider', pocName: 'POC', contactNumber: 'Mobile Number', repeats: 'Recurring', executionDate: 'Execution Date',
         executionTime: 'Execution Time', duration: 'Duration', periodStartDate: 'Start Date', periodEndDate: 'End Date', driver: 'Driver',
-        tripRemarks: 'Trip Remarks', endsOn: 'Ends On', repeatsOn: 'Repeat On', preParkDate: 'Pre Park Date'
+        tripRemarks: 'Trip Remarks', endsOn: 'Ends On', repeatsOn: 'Repeat On', preParkDate: 'Pre Park Date', preParkQty: 'No. Of Pre-Park'
     }
     if (data[key] == "" && key != "driver") {
         simplyAlert(errorLabel[key] + " is required.")
@@ -997,6 +1004,11 @@ const ValidTripForm = function (data, isEdit) {
         return false
     }
 
+    if (data["preParkQty"] && Number(data["preParkQty"]) > Number(data["noOfVehicle"])) {
+        simplyAlert(`No. Of Pre-Park must be less then No. Of Resource.`)
+        return false
+    }
+
     return validateWeekly(isEdit, data)
 }
 
@@ -1037,6 +1049,17 @@ const ChangeRepeats = function (val) {
     if (val == "Period" && $('input:radio:checked').val().toUpperCase() == "MV") {
         $("#date-select").prepend($("#preParkHtml").html())
         InitPreParkDateSelector()
+    }
+}
+
+const showPreParkQty = function (show) {
+    if (show) {
+        if ($("#preParkQty").length == 0) {
+            $("#date-select").append($("#preParkQtyHtml").html())
+            $("#preParkQty").val($("#noOfVehicle").val())
+        }
+    } else {
+        $("#preParkQty-row").remove()
     }
 }
 
@@ -1114,6 +1137,9 @@ const GetEditFormData = function () {
     data.preParkDate = parent.changeDateFormat(data.preParkDate)
     data.endsOn = parent.changeDateFormat(data.endsOn)
 
+    if (data.preParkDate) {
+        data.preParkQty = $("#preParkQty").val()
+    }
     return data
 }
 
@@ -1294,6 +1320,17 @@ const checkDriverNum = function () {
     let driverNum = $("#noOfDriver").val();
     if (parseInt(driverNum) > parseInt(noOfVehicle)) {
         $("#noOfDriver").val(noOfVehicle);
+    }
+}
+
+const checkPreparkNum = function () {
+    if ($("#typeOfVehicle").val() == "-") {
+        return
+    }
+    let noOfVehicle = $('#noOfVehicle').val() || 0;
+    let preParkQty = $("#preParkQty").val();
+    if (parseInt(preParkQty) > parseInt(noOfVehicle)) {
+        $("#preParkQty").val(noOfVehicle);
     }
 }
 

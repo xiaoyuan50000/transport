@@ -781,7 +781,7 @@ module.exports.FindIndentById = async function (req, res) {
 
 module.exports.FindTripById = async function (req, res) {
     let { tripId } = req.body
-    const trip = await sequelizeObj.query(
+    let trip = await sequelizeObj.query(
         `SELECT
             a.*, b.name, c.groupId
         FROM
@@ -794,11 +794,23 @@ module.exports.FindTripById = async function (req, res) {
             type: QueryTypes.SELECT
         }
     );
-    if (trip.length > 0) {
-        return Response.success(res, trip[0])
-    } else {
+    if (trip.length == 0) {
         return Response.success(res, null)
     }
+
+    let findTrip = trip[0]
+    if (!findTrip.preParkDate) {
+        return Response.success(res, findTrip)
+    }
+
+    let periodTrip = await requestService.GetPeriodAnotherTrip(findTrip)
+    if (findTrip.instanceId) {
+        findTrip.preParkQty = periodTrip.noOfVehicle
+    } else {
+        findTrip.preParkQty = findTrip.noOfVehicle
+        findTrip.noOfVehicle = periodTrip.noOfVehicle
+    }
+    return Response.success(res, findTrip)
 }
 
 const GetAssignedDriver = async function (tripIdArray) {

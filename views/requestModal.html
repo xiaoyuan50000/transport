@@ -1,16 +1,18 @@
-<div class="modal fade" id="tripModal" data-bs-backdrop="static" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+<div class="modal fade" id="tripModal" data-bs-backdrop="static" tabindex="-1" aria-labelledby="exampleModalLabel"
+    aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content border-0">
             <div class="modal-header modal-header-background">
                 <h5 class="modal-title">Trip</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="row m-2">
                     <div class="col-6">
                         <form id="base-task-form">
                             <div class="mb-2 row" id="groupSelect">
-    
+
                             </div>
                             <div class="mb-2 row">
                                 <label for="purposeType" class="col-sm-5 col-form-label">Purpose:</label>
@@ -23,30 +25,35 @@
                             <div class="mb-2 row">
                                 <label for="additionalRemarks" class="col-sm-5 col-form-label">Activity Name:</label>
                                 <div class="col-sm-7">
-                                    <input class="form-control" id="additionalRemarks" name="additionalRemarks" autocomplete="off">
+                                    <input class="form-control" id="additionalRemarks" name="additionalRemarks"
+                                        autocomplete="off">
                                 </div>
                             </div>
-                            
+
                             <div class="mb-2 row">
                                 <label for="startDate" class="col-sm-5 col-form-label">Start Date:</label>
                                 <div class="col-sm-7">
-                                    <input class="form-control" id="startDate" name="startDate" autocomplete="off" disabled>
+                                    <input class="form-control" id="startDate" name="startDate" autocomplete="off"
+                                        disabled>
                                 </div>
                             </div>
                             <div class="mb-2 row">
-                                <label for="estimatedTripDuration" class="col-sm-5 col-form-label">Estimated Trip Duration:</label>
+                                <label for="estimatedTripDuration" class="col-sm-5 col-form-label">Estimated Trip
+                                    Duration:</label>
                                 <div class="col-sm-7">
-                                    <input class="form-control" id="estimatedTripDuration" name="estimatedTripDuration" autocomplete="off" disabled>
+                                    <input class="form-control" id="estimatedTripDuration" name="estimatedTripDuration"
+                                        autocomplete="off" disabled>
                                 </div>
                             </div>
                             <div class="mb-3 row">
                                 <label for="noOfTrips" class="col-sm-5 col-form-label">No. of Trips:</label>
                                 <div class="col-sm-7">
-                                    <input type="number" class="form-control" id="noOfTrips" name="noOfTrips" autocomplete="off" disabled>
+                                    <input type="number" class="form-control" id="noOfTrips" name="noOfTrips"
+                                        autocomplete="off" disabled>
                                 </div>
                             </div>
                             <div id="templateIndentContent">
-                                
+
                             </div>
                         </form>
                     </div>
@@ -58,11 +65,12 @@
                                         <div class="mb-2 row">
                                             <label for="category" class="col-sm-5 col-form-label">Category:</label>
                                             <div class="col-sm-7" id="category-radio">
-                                                
+
                                             </div>
                                         </div>
                                         <div class="mb-2 row">
-                                            <label for="serviceType" class="col-sm-5 col-form-label">Resource Type:</label>
+                                            <label for="serviceType" class="col-sm-5 col-form-label">Resource
+                                                Type:</label>
                                             <div class="col-sm-7">
                                                 <select class="form-select" id="serviceType" name="serviceType">
                                                 </select>
@@ -198,7 +206,7 @@
                         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
                     </div>
                     <div class="col-auto action-button">
-                        
+
                     </div>
                 </div>
             </div>
@@ -319,6 +327,18 @@
         </div>
         <div class="col-sm-7">
             <input class="form-control" id="preParkDate" name="preParkDate" autocomplete="off" readonly>
+        </div>
+    </div>
+</script>
+
+<script type="text/html" id="preParkQtyHtml">
+    <div class="row mb-2 m-0 p-0" id="preParkQty-row">
+        <div class="col-sm-5">
+            <label class=" col-form-label">No. Of Pre-Park:</label>
+        </div>
+        <div class="col-sm-7">
+            <input type="number" min="1" class="form-control" id="preParkQty" name="preParkQty" autocomplete="off" oninput="checkPreparkNum();" 
+            onKeypress="return (/[\d]/.test(String.fromCharCode(event.keyCode)))">
         </div>
     </div>
 </script>
