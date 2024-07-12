@@ -19,6 +19,7 @@ const { ServiceType } = require('../model/serviceType');
 const { PurposeMode } = require('../model/purposeMode');
 const { ServiceProvider } = require('../model/serviceProvider');
 const { User } = require('../model/user');
+const { Role } = require('../model/role');
 const { RecurringMode } = require('../model/recurringMode');
 const { ResourceDriver } = require('../model/resourceDriver');
 const requestService = require('../services/requestService2');
@@ -799,6 +800,20 @@ module.exports.FindTripById = async function (req, res) {
     }
 
     let findTrip = trip[0]
+    let record = await OperationHistory.findOne({
+        where: {
+            tripId: tripId,
+            action: 'New Trip'
+        }
+    })
+    let createdBy = record ? record.operatorId : -1
+    let user = await User.findByPk(createdBy)
+    findTrip.isCreatedByRQ = false
+    if (user) {
+        let role = await Role.findByPk(user.role)
+        findTrip.isCreatedByRQ = role.roleName == 'RQ'
+    }
+
     if (!findTrip.preParkDate) {
         return Response.success(res, findTrip)
     }
@@ -810,6 +825,8 @@ module.exports.FindTripById = async function (req, res) {
         findTrip.preParkQty = findTrip.noOfVehicle
         findTrip.noOfVehicle = periodTrip.noOfVehicle
     }
+
+
     return Response.success(res, findTrip)
 }
 

@@ -139,6 +139,13 @@ module.exports.Job2 = dbConf.sequelizeObj.define('job', {
     dropoffDestinationId: {
         type: DataTypes.BIGINT,
     },
+    unitOwnFund: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: 0
+    },
+    wogTSP: {
+        type: DataTypes.BIGINT,
+    },
 }, {
     timestamps: true,
 });
@@ -285,6 +292,13 @@ module.exports.Job2History = dbConf.sequelizeObj.define('job_history', {
     dropoffDestinationId: {
         type: DataTypes.BIGINT,
     },
+    unitOwnFund: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: 0
+    },
+    wogTSP: {
+        type: DataTypes.BIGINT,
+    }
 }, {
     timestamps: true,
 });

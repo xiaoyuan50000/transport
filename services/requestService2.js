@@ -113,7 +113,7 @@ module.exports.CreateIndent = async function (req, res) {
     let {
         pickupDestination, pickupNotes, dropoffDestination, dropoffNotes, typeOfVehicle, noOfVehicle, noOfDriver, pocName, contactNumber,
         repeats, repeatsOn, executionDate, executionTime, endsOn, duration, serviceProvider,
-        periodStartDate, periodEndDate, driver, tripRemarks, serviceMode, serviceType, preParkDate, preParkQty
+        periodStartDate, periodEndDate, driver, tripRemarks, serviceMode, serviceType, preParkDate, preParkQty, unitOwnFund, wogTSP
     } = req.body.trip
 
     let valid = validIndentFieldLength(tripRemarks, additionalRemarks, pickupNotes, dropoffNotes, pocName, contactNumber)
@@ -152,7 +152,7 @@ module.exports.CreateIndent = async function (req, res) {
 
     await CreateTripByRepeats(indent, pickupDestination, pickupNotes, dropoffDestination, dropoffNotes, typeOfVehicle, Number(noOfVehicle), Number(noOfDriver), pocName, contactNumber,
         repeats, repeatsOn, executionDate, executionTime, endsOn, periodStartDate, periodEndDate, duration, serviceProvider, user, driver, tripRemarks,
-        serviceMode, serviceType, preParkDate, preParkQty)
+        serviceMode, serviceType, preParkDate, preParkQty, unitOwnFund, wogTSP)
 
     await UpdateIndentInfo(indentId)
     let mv = await IsCategoryMV(serviceType)
@@ -211,7 +211,7 @@ module.exports.CreateIndent = async function (req, res) {
 
 const CreateTripByRepeats = async function (indent, pickupDestination, pickupNotes, dropoffDestination, dropoffNotes, typeOfVehicle, noOfVehicle, noOfDriver, pocName, contactNumber,
     repeats, repeatsOn, executionDate, executionTime, endsOn, periodStartDate, periodEndDate, duration, serviceProvider, user, driver, tripRemarks,
-    serviceModeId, serviceTypeId, preParkDate, preParkQty) {
+    serviceModeId, serviceTypeId, preParkDate, preParkQty, unitOwnFund, wogTSP) {
     let serviceProviderId = serviceProvider
     let tripNo = await GetTripNo(indent.id)
     let serviceMode = await ServiceMode.findByPk(serviceModeId)
@@ -219,14 +219,14 @@ const CreateTripByRepeats = async function (indent, pickupDestination, pickupNot
     if (repeats == "Once") {
         await DoCreateTrip(indent, serviceProviderId, pickupDestination, pickupNotes, dropoffDestination, dropoffNotes, typeOfVehicle, noOfVehicle, noOfDriver,
             pocName, contactNumber, repeats, executionDate, executionTime, duration, user, driver, tripNo, periodStartDate, periodEndDate, true,
-            tripRemarks, serviceMode, serviceTypeId, "", "", preParkDate)
+            tripRemarks, serviceMode, serviceTypeId, "", "", preParkDate, unitOwnFund, wogTSP)
     } else if (repeats == "Period") {
 
         let periodExecutionStartDate = moment(periodStartDate).format(fmt)
         let periodExecutionStartTime = moment(periodStartDate).format(fmt1)
         await DoCreateTrip(indent, serviceProviderId, pickupDestination, pickupNotes, dropoffDestination, dropoffNotes, typeOfVehicle, noOfVehicle, noOfDriver,
             pocName, contactNumber, repeats, periodExecutionStartDate, periodExecutionStartTime, null, user, driver, tripNo, periodStartDate, periodEndDate, true,
-            tripRemarks, serviceMode, serviceTypeId, "", "", preParkDate)
+            tripRemarks, serviceMode, serviceTypeId, "", "", preParkDate, unitOwnFund, wogTSP)
 
         if (preParkDate) {
             let periodExecutionEndDate = moment(preParkDate).format(fmt)
@@ -235,7 +235,7 @@ const CreateTripByRepeats = async function (indent, pickupDestination, pickupNot
             noOfVehicle = preParkQty || noOfVehicle
             await DoCreateTrip(indent, serviceProviderId, pickupDestination, pickupNotes, dropoffDestination, dropoffNotes, typeOfVehicle, noOfVehicle, noOfDriver,
                 pocName, contactNumber, repeats, periodExecutionEndDate, periodExecutionEndTime, null, user, driver, tripNo, periodStartDate, periodEndDate, false,
-                tripRemarks, serviceMode, serviceTypeId, "", "", preParkDate)
+                tripRemarks, serviceMode, serviceTypeId, "", "", preParkDate, unitOwnFund, wogTSP)
         }
     } else { // Weekly
         let fmt = "YYYY-MM-DD"
@@ -295,7 +295,7 @@ module.exports.getSingaporePublicHolidays = async function (req, res) {
 
 const DoCreateTrip = async function (indent, serviceProviderId, pickupDestination, pickupNotes, dropoffDestination, dropoffNotes, typeOfVehicle, noOfVehicle, noOfDriver,
     pocName, contactNumber, repeats, executionDate, executionTime, duration, user, driver, tripNo, periodStartDate, periodEndDate,
-    isCreateWorkFlow, tripRemarks, serviceMode, serviceTypeId, repeatsOn, endsOn, preParkDate) {
+    isCreateWorkFlow, tripRemarks, serviceMode, serviceTypeId, repeatsOn, endsOn, preParkDate, unitOwnFund, wogTSP) {
 
     let serviceModeId = serviceMode.id
     let serviceModeVal = serviceMode.name
@@ -336,7 +336,9 @@ const DoCreateTrip = async function (indent, serviceProviderId, pickupDestinatio
         startsOn: executionDate,
         endsOn: endsOn,
         repeatsOn: repeatsOnStr,
-        preParkDate: preParkDate
+        preParkDate: preParkDate,
+        unitOwnFund: unitOwnFund,
+        wogTSP: wogTSP
     })
     let tripId = trip.id
     if (isCreateWorkFlow) {
@@ -347,11 +349,14 @@ const DoCreateTrip = async function (indent, serviceProviderId, pickupDestinatio
 
     let { startDate, endDate } = GetStartDateAndEndDate(executionDate, executionTime, duration, { periodStartDate, periodEndDate, preParkDate, isCreateWorkFlow })
     let createTaskList = await GetCreateTasks(noOfVehicle, noOfDriver, pickupDestination, pickupNotes, dropoffDestination, dropoffNotes,
-        executionDate, executionTime, duration, indent, tripId, pocName, contactNumber, typeOfVehicle, user, serviceModeVal, serviceModeId, serviceTypeId, tripNo, startDate, endDate)
+        executionDate, executionTime, duration, indent, tripId, pocName, contactNumber, typeOfVehicle, user, serviceModeVal, serviceModeId, serviceTypeId, tripNo, startDate, endDate, unitOwnFund)
 
     let funding = await getfunding(indent.purposeType, serviceTypeId)
     createTaskList.forEach(val => {
         val.funding = funding
+        if (unitOwnFund) {
+            val.serviceProviderId = wogTSP
+        }
     })
 
     let createdTasks = await Task2.bulkCreate(createTaskList, { returning: true })
@@ -373,7 +378,7 @@ module.exports.CreateTrip = async function (req, res) {
     let {
         pickupDestination, pickupNotes, dropoffDestination, dropoffNotes, typeOfVehicle, noOfVehicle, noOfDriver, pocName, contactNumber,
         repeats, repeatsOn, executionDate, executionTime, endsOn, periodStartDate, periodEndDate, duration,
-        indentId, createdBy, serviceProvider, driver, tripRemarks, serviceMode, serviceType, preParkDate, preParkQty
+        indentId, createdBy, serviceProvider, driver, tripRemarks, serviceMode, serviceType, preParkDate, preParkQty, unitOwnFund, wogTSP
     } = req.body
 
     let user = await GetUserInfo(createdBy)
@@ -391,7 +396,7 @@ module.exports.CreateTrip = async function (req, res) {
 
     await CreateTripByRepeats(indent, pickupDestination, pickupNotes, dropoffDestination, dropoffNotes, typeOfVehicle, Number(noOfVehicle), Number(noOfDriver), pocName, contactNumber,
         repeats, repeatsOn, executionDate, executionTime, endsOn, periodStartDate, periodEndDate, duration, serviceProvider, user, driver, tripRemarks,
-        serviceMode, serviceType, preParkDate, preParkQty)
+        serviceMode, serviceType, preParkDate, preParkQty, unitOwnFund, wogTSP)
 
     await UpdateIndentInfo(indentId)
 
@@ -418,12 +423,15 @@ module.exports.CreateTrip = async function (req, res) {
     return Response.success(res, indent)
 }
 
-const GetContractPartNo = async function (typeOfVehicle, serviceModeId, dropoffDestination, pickupDestination, executionDate, serviceProviderId, executionTime) {
-    let serviceProviderList = await indentService.FilterServiceProvider(typeOfVehicle, serviceModeId, dropoffDestination, pickupDestination, executionDate, executionTime)
+const GetContractPartNo = async function (typeOfVehicle, serviceModeId, dropoffDestination, pickupDestination, executionDate, serviceProviderId, executionTime, unitOwnFund = false) {
+    let serviceProviderList = []
+    if (unitOwnFund) {
+        serviceProviderList = await FilterWOGServiceProvider(serviceModeId, typeOfVehicle)
+    } else {
+        serviceProviderList = await indentService.FilterServiceProvider(typeOfVehicle, serviceModeId, dropoffDestination, pickupDestination, executionDate, executionTime)
+    }
     log.info(JSON.stringify(serviceProviderList, null, 2))
-    // let isoWeekday = moment(executionDate).isoWeekday()
-    // let isWeekDay = (isoWeekday == 6 || isoWeekday == 7) ? true : false
-    // let tsp = serviceProviderList.find(item => item.id == serviceProviderId && item.driver == driver && item.isWeekend == isWeekDay)
+
     let tsp = serviceProviderList.find(item => item.id == serviceProviderId)
     return tsp ? tsp.contractPartNo : null
 }
@@ -537,7 +545,7 @@ const getMobiusUnitId = function (mobiusSubUnits, groupName) {
 }
 
 const GetCreateTasks = async function (noOfVehicle, noOfDriver, pickupDestination, pickupNotes, dropoffDestination, dropoffNotes,
-    executionDate, executionTime, duration, indent, tripId, pocName, contactNumber, typeOfVehicle, user, serviceMode, serviceModeId, serviceTypeId, tripNo, startDate, endDate) {
+    executionDate, executionTime, duration, indent, tripId, pocName, contactNumber, typeOfVehicle, user, serviceMode, serviceModeId, serviceTypeId, tripNo, startDate, endDate, unitOwnFund = false) {
 
     let indentId = indent.id
     let { pickUpLocation, dropOffLocation } = await GetPickupAndDropoffLocation(pickupDestination, dropoffDestination)
@@ -547,7 +555,12 @@ const GetCreateTasks = async function (noOfVehicle, noOfDriver, pickupDestinatio
     let groupName = group.groupName
     // let poNumber = indent.poNumber
 
-    let selectableTspList = await indentService.FilterServiceProvider(typeOfVehicle, serviceModeId, dropoffDestination, pickupDestination, executionDate, executionTime)
+    let selectableTspList = []
+    if (unitOwnFund) {
+        selectableTspList = await FilterWOGServiceProvider(serviceModeId, typeOfVehicle)
+    } else {
+        selectableTspList = await indentService.FilterServiceProvider(typeOfVehicle, serviceModeId, dropoffDestination, pickupDestination, executionDate, executionTime)
+    }
     let selectableTspStr = getSelectableTspStr(selectableTspList)
 
     let mobiusUnitId = null;
@@ -807,8 +820,8 @@ module.exports.GetCreateTasks = GetCreateTasks
 
 
 // cancel and create or update
-const UpdateOrCancelJobTask = async function (taskList, alreadySendDataTasks, typeOfVehicle, serviceModeId, createdBy, tripNo) {
-    if (taskList.length == 0) {
+const UpdateOrCancelJobTask = async function (taskList, alreadySendDataTasks, typeOfVehicle, serviceModeId, createdBy, tripNo, unitOwnFund) {
+    if (taskList.length == 0 || unitOwnFund) {
         return
     }
 
@@ -896,9 +909,9 @@ module.exports.EditTrip = async function (req, res) {
         let {
             pickupDestination, pickupNotes, dropoffDestination, dropoffNotes, typeOfVehicle, noOfVehicle, noOfDriver, pocName,
             contactNumber, executionDate, executionTime, duration, tripId, createdBy, serviceProvider, remark,
-            periodStartDate, periodEndDate, driver, repeats, tripRemarks, serviceMode, serviceType, preParkDate, additionalRemarks, preParkQty
+            periodStartDate, periodEndDate, driver, repeats, tripRemarks, serviceMode, serviceType, preParkDate, additionalRemarks, preParkQty, unitOwnFund, wogTSP
         } = req.body
-        
+
         let valid = validIndentFieldLength(tripRemarks, "", pickupNotes, dropoffNotes, pocName, contactNumber)
         if (!valid.success) {
             return Response.error(res, valid.message)
@@ -925,6 +938,7 @@ module.exports.EditTrip = async function (req, res) {
         let endsOn = trip.endsOn
         let repeatsOn = trip.repeatsOn
 
+
         if (trip.status.toLowerCase() == INDENT_STATUS.REJECTED.toLowerCase()) {
             reEdit = 1
         }
@@ -947,8 +961,8 @@ module.exports.EditTrip = async function (req, res) {
                 contactNumber, executionDate, executionTime, duration, createdBy, serviceProviderId, remark, roleName,
                 periodStartDate, periodEndDate, driver, user, tripRemarks, serviceMode, serviceType, repeats,
                 requestId, instanceId, createdAt, isImport, tripNo, reEdit, indent, true, oldTripId, [], serviceModeVal,
-                startsOn, endsOn, repeatsOn, jobHistoryId, preParkDate, trip)
-            await UpdateOrCancelJobTask(taskList, alreadySendDataTasks, typeOfVehicle, serviceMode, createdBy, tripNo)
+                startsOn, endsOn, repeatsOn, jobHistoryId, preParkDate, trip, unitOwnFund, wogTSP)
+            await UpdateOrCancelJobTask(taskList, alreadySendDataTasks, typeOfVehicle, serviceMode, createdBy, tripNo, unitOwnFund)
         } else {
             let periodExecutionStartDate = moment(periodStartDate).format(fmt)
             let periodExecutionStartTime = moment(periodStartDate).format(fmt1)
@@ -956,7 +970,7 @@ module.exports.EditTrip = async function (req, res) {
                 contactNumber, periodExecutionStartDate, periodExecutionStartTime, null, createdBy, serviceProviderId, remark, roleName,
                 periodStartDate, periodEndDate, driver, user, tripRemarks, serviceMode, serviceType, repeats,
                 requestId, instanceId, createdAt, isImport, tripNo, reEdit, indent, true, oldTripId, [], serviceModeVal,
-                startsOn, endsOn, repeatsOn, jobHistoryId, preParkDate, trip)
+                startsOn, endsOn, repeatsOn, jobHistoryId, preParkDate, trip, unitOwnFund, wogTSP)
 
             let taskList2 = []
             if (preParkDate) {
@@ -969,10 +983,10 @@ module.exports.EditTrip = async function (req, res) {
                     contactNumber, periodExecutionEndDate, periodExecutionEndTime, null, createdBy, serviceProviderId, remark, roleName,
                     periodStartDate, periodEndDate, driver, user, tripRemarks, serviceMode, serviceType, repeats,
                     requestId, null, createdAt, isImport, tripNo, reEdit, indent, false, null, oldOperationHistorys, serviceModeVal,
-                    startsOn, endsOn, repeatsOn, jobHistoryId, preParkDate, trip)
+                    startsOn, endsOn, repeatsOn, jobHistoryId, preParkDate, trip, unitOwnFund, wogTSP)
             }
             let taskList = taskList1.concat(taskList2)
-            await UpdateOrCancelJobTask(taskList, alreadySendDataTasks, typeOfVehicle, serviceMode, createdBy, tripNo)
+            await UpdateOrCancelJobTask(taskList, alreadySendDataTasks, typeOfVehicle, serviceMode, createdBy, tripNo, unitOwnFund)
         }
 
         if (!additionalRemarks) {
@@ -1289,7 +1303,7 @@ const DoEditTrip = async function (pickupDestination, pickupNotes, dropoffDestin
     contactNumber, executionDate, executionTime, duration, createdBy, serviceProviderId, remark, roleName,
     periodStartDate, periodEndDate, driver, user, tripRemarks, serviceModeId, serviceTypeId, repeats,
     requestId, instanceId, createdAt, isImport, tripNo, reEdit, indent, isCreateWorkFlow, oldTripId, oldOperationHistorys, serviceModeVal,
-    startsOn, endsOn, repeatsOn, jobHistoryId, preParkDate, trip) {
+    startsOn, endsOn, repeatsOn, jobHistoryId, preParkDate, trip, unitOwnFund, wogTSP) {
 
     // ack
     let pickupDestinationId, dropoffDestinationId, resourceId = null
@@ -1349,15 +1363,21 @@ const DoEditTrip = async function (pickupDestination, pickupNotes, dropoffDestin
         resourceId: resourceId,
         pickupDestinationId: pickupDestinationId,
         dropoffDestinationId: dropoffDestinationId,
+        // wog tsp
+        unitOwnFund: unitOwnFund,
+        wogTSP: wogTSP,
     })
     let newTripId = newJob.id
     let { startDate, endDate } = GetStartDateAndEndDate(executionDate, executionTime, duration, { periodStartDate, periodEndDate, preParkDate, isCreateWorkFlow })
     let createTaskList = await GetCreateTasks(noOfVehicle, noOfDriver, pickupDestination, pickupNotes, dropoffDestination, dropoffNotes,
-        executionDate, executionTime, duration, indent, newTripId, pocName, contactNumber, typeOfVehicle, user, serviceModeVal, serviceModeId, serviceTypeId, tripNo, startDate, endDate)
+        executionDate, executionTime, duration, indent, newTripId, pocName, contactNumber, typeOfVehicle, user, serviceModeVal, serviceModeId, serviceTypeId, tripNo, startDate, endDate, unitOwnFund)
 
     let funding = await getfunding(indent.purposeType, serviceTypeId)
     createTaskList.forEach(val => {
         val.funding = funding
+        if (unitOwnFund) {
+            val.serviceProviderId = wogTSP
+        }
     })
 
     let taskList = await Task2.bulkCreate(createTaskList, { returning: true })
@@ -1377,7 +1397,6 @@ const DoEditTrip = async function (pickupDestination, pickupNotes, dropoffDestin
         })
         newStatus = INDENT_STATUS.APPROVED
         approve = 1
-
     }
     else if (roleName == ROLE.UCO) {
         // newStatus = INDENT_STATUS.WAITAPPROVEDRF
@@ -1487,6 +1506,10 @@ const CopyRecordToHistory = async function (trip, tasks) {
         pocUnitCode: trip.pocUnitCode,
         pickupDestinationId: trip.pickupDestinationId,
         dropoffDestinationId: trip.dropoffDestinationId,
+        // wog TSP
+        unitOwnFund: trip.unitOwnFund,
+        wogTSP: trip.wogTSP,
+
     })
     let taskHistoryRecords = []
     for (let task of tasks) {
@@ -1825,6 +1848,7 @@ const IsExcessDailyTrip = async function (contractPartNo, executionDate) {
 
 const SendAndGet3rdData = async function (task, trip, serviceProviderId, optTime, executionDate, executionTime, operatorId) {
     let taskId = task.id
+    let unitOwnFund = trip.unitOwnFund
     // let serviceProviderId = task.serviceProviderId ? task.serviceProviderId : trip.serviceProviderId
     let serviceProvider = await ServiceProvider.findByPk(serviceProviderId)
     let allocateeId = serviceProvider.allocateeId
@@ -1836,7 +1860,7 @@ const SendAndGet3rdData = async function (task, trip, serviceProviderId, optTime
         }
     }
     let contractPartNo = await GetContractPartNo(trip.vehicleType, trip.serviceModeId,
-        trip.dropoffDestination, trip.pickupDestination, executionDate, serviceProviderId, executionTime ? executionTime : task.executionTime)
+        trip.dropoffDestination, trip.pickupDestination, executionDate, serviceProviderId, executionTime ? executionTime : task.executionTime, unitOwnFund)
 
     let notifiedTime = null;
     let tspLastChangeTime = null;
@@ -1860,10 +1884,20 @@ const SendAndGet3rdData = async function (task, trip, serviceProviderId, optTime
     // }
 
     // await Task2.update({ funding: funding, walletId: null, notifiedTime: notifiedTime, tspChangeTime: tspLastChangeTime, contractPartNo: contractPartNo, serviceProviderId: serviceProviderId }, { where: { id: taskId } })
-    await Task2.update({ walletId: null, notifiedTime: notifiedTime, tspChangeTime: tspLastChangeTime, contractPartNo: contractPartNo, serviceProviderId: serviceProviderId }, { where: { id: taskId } })
+    let updateObj = { walletId: null, notifiedTime: notifiedTime, tspChangeTime: tspLastChangeTime, contractPartNo: contractPartNo, serviceProviderId: serviceProviderId }
+    if (unitOwnFund) {
+        updateObj.externalJobId = null
+        updateObj.externalTaskId = null
+        updateObj.contractPartNo = null
+        // updateObj.notifiedTime = null
+        // updateObj.tspChangeTime = null
+    }
+    await Task2.update(updateObj, { where: { id: taskId } })
 
-    let msg = JSON.stringify({ taskId: taskId, allocateeId: allocateeId, operatorId: operatorId, serviceProviderId: serviceProviderId, createdAt: moment().add(1, 's').format('YYYY-MM-DD HH:mm:ss') })
-    activeMQ.publicCreateJobMsg(Buffer.from(msg))
+    if (!unitOwnFund) {
+        let msg = JSON.stringify({ taskId: taskId, allocateeId: allocateeId, operatorId: operatorId, serviceProviderId: serviceProviderId, createdAt: moment().add(1, 's').format('YYYY-MM-DD HH:mm:ss') })
+        activeMQ.publicCreateJobMsg(Buffer.from(msg))
+    }
 
     return contractPartNo
 }
@@ -2033,6 +2067,11 @@ const Cancelled = async function (trip, createdBy) {
 
 const CancelledTasksByExternalJobId = async function (tasks, createdBy) {
     let filterTasks = tasks.filter(o => o.externalJobId != null)
+
+    if (filterTasks.length == 0) {
+        return
+    }
+
     for (let task of filterTasks) {
         let msg = Buffer.from(JSON.stringify({
             externalJobId: task.externalJobId, operatorId: createdBy,
@@ -2049,6 +2088,11 @@ module.exports.CancelledTasksByExternalJobId = CancelledTasksByExternalJobId
 //wog
 const CancelledWogTasks = async function (tasks, createdBy) {
     let filterTasks = tasks.filter(o => o.serviceProviderId == -1)
+
+    if (filterTasks.length == 0) {
+        return
+    }
+
     let createdAt = moment().format('YYYY-MM-DD HH:mm:ss')
     for (let task of filterTasks) {
         // let taskId = task.id
@@ -2112,8 +2156,14 @@ module.exports.BulkApprove = async function (req, res) {
     // if (pendingForCancellationTaskList.length > 0) {
     //     await DoBulkCancel(pendingForCancellationTaskList, roleName, remark, userId)
     // }
-    if (pendingForApproveTaskList.length > 0) {
-        await DoBulkApprove(pendingForApproveTaskList, roleName, remark, userId)
+    let pendingForApproveNoWOGList = pendingForApproveTaskList.filter(o => !o.unitOwnFund)
+    if (pendingForApproveNoWOGList.length > 0) {
+        await DoBulkApprove(pendingForApproveNoWOGList, roleName, remark, userId)
+    }
+
+    let pendingForApproveWOGList = pendingForApproveTaskList.filter(o => o.unitOwnFund)
+    if (pendingForApproveWOGList.length > 0) {
+        await DoWOGBulkApprove(pendingForApproveWOGList, roleName, remark, userId)
     }
     return Response.success(res, true)
 }
@@ -2148,6 +2198,7 @@ const DoBulkApprove = async function (trips, roleName, remark, createdBy) {
     for (let trip of trips) {
         let updateObj = { status: newStatus, approve: approve }
 
+        await setApplyInstanceId(trip, roleName, updateObj, approved)
         await Job2.update(updateObj, { where: { id: trip.id } });
         await RecordOperationHistory(trip.requestId, trip.id, null, createdBy, newStatus, OperationAction.Approve, remark)
 
@@ -2161,7 +2212,6 @@ const DoBulkApprove = async function (trips, roleName, remark, createdBy) {
         // Period
         if (trip.repeats == "Period" && trip.preParkDate) {
             let trip2 = await GetPeriodAnotherTrip(trip)
-            await setApplyInstanceId(trip, roleName, updateObj, approved)
             await Job2.update({ status: newStatus, approve: approve }, { where: { id: trip2.id } });
             await RecordOperationHistory(trip2.requestId, trip2.id, null, createdBy, newStatus, OperationAction.Approve, remark)
 
@@ -2171,6 +2221,46 @@ const DoBulkApprove = async function (trips, roleName, remark, createdBy) {
         }
 
         if (isRFOrOCC(roleName)) {
+            // send mobius server auto match driver
+            await Utils.SendTripToMobiusServer(tripIdList)
+        }
+    }
+}
+
+const DoWOGBulkApprove = async function (trips, roleName, remark, createdBy) {
+
+    let approve = 0
+    let newStatus = ""
+    if (roleName == ROLE.UCO) {
+        newStatus = INDENT_STATUS.APPROVED
+        approve = 1
+    }
+
+    for (let trip of trips) {
+        let updateObj = { status: newStatus, approve: approve }
+
+        await WorkFlow.apply(trip.instanceId, true, "", roleName)
+
+        await Job2.update(updateObj, { where: { id: trip.id } });
+        await RecordOperationHistory(trip.requestId, trip.id, null, createdBy, newStatus, OperationAction.Approve, remark)
+
+        let tripIdList = []
+        let mv = await IsCategoryMV(trip.serviceType)
+        if (mv) {
+            tripIdList.push(trip.id)
+        }
+        // Period
+        if (trip.repeats == "Period" && trip.preParkDate) {
+            let trip2 = await GetPeriodAnotherTrip(trip)
+            await Job2.update({ status: newStatus, approve: approve }, { where: { id: trip2.id } });
+            await RecordOperationHistory(trip2.requestId, trip2.id, null, createdBy, newStatus, OperationAction.Approve, remark)
+
+            if (mv) {
+                tripIdList.push(trip2.id)
+            }
+        }
+
+        if (roleName == ROLE.UCO) {
             // send mobius server auto match driver
             await Utils.SendTripToMobiusServer(tripIdList)
         }
@@ -2765,12 +2855,12 @@ module.exports.BulkUpdateTSPAndApprove = async function (req, res) {
 
 const DoUpdateTSPAndApprove = async function (serviceProviderId, optTime, userId, task, job) {
     task.isChange = 1
-
+    let unitOwnFund = job.unitOwnFund
     let serviceMode = await ServiceMode.findByPk(job.serviceModeId)
     let chargeType = serviceMode.chargeType
     if (chargeType == ChargeType.TRIP) {
         let contractPartNo1 = await GetContractPartNo(job.vehicleType, job.serviceModeId,
-            job.dropoffDestination, job.pickupDestination, task.executionDate, serviceProviderId, task.executionTime)
+            job.dropoffDestination, job.pickupDestination, task.executionDate, serviceProviderId, task.executionTime, unitOwnFund)
 
         let isExcess = await IsExcessDailyTrip(contractPartNo1, task.executionDate)
         if (isExcess) {
@@ -2779,7 +2869,7 @@ const DoUpdateTSPAndApprove = async function (serviceProviderId, optTime, userId
     }
 
     let externalJobId = task.externalJobId
-    if (externalJobId != null) {
+    if (externalJobId != null && !unitOwnFund) {
         let msg = Buffer.from(JSON.stringify({
             externalJobId: externalJobId, operatorId: userId,
             serviceProviderId: task.serviceProviderId, createdAt: moment().format('YYYY-MM-DD HH:mm:ss'),
@@ -2801,6 +2891,7 @@ const DoUpdateTSPAndApprove = async function (serviceProviderId, optTime, userId
             job.status = INDENT_STATUS.APPROVED
             job.contractPartNo = contractPartNo
             job.serviceProviderId = serviceProviderId
+            job.wogTSP = serviceProviderId
             await job.save();
         }
         // await RecordOperationHistory(task.requestId, task.tripId, task.id, userId, TASK_STATUS.UNASSIGNED, TASK_STATUS.UNASSIGNED, "")
@@ -3333,12 +3424,12 @@ module.exports.CreateIndentByTemplate = async function (req, res) {
             let {
                 pickupDestination, pickupNotes, dropoffDestination, dropoffNotes, typeOfVehicle, noOfVehicle, noOfDriver, pocName, contactNumber,
                 repeats, repeatsOn, executionDate, executionTime, endsOn, duration, serviceProvider,
-                periodStartDate, periodEndDate, driver, tripRemarks, serviceMode, serviceType, preParkDate, preParkQty
+                periodStartDate, periodEndDate, driver, tripRemarks, serviceMode, serviceType, preParkDate, preParkQty, unitOwnFund, wogTSP
             } = trip
 
             let tripNo = await CreateTripByRepeats(indent, pickupDestination, pickupNotes, dropoffDestination, dropoffNotes, typeOfVehicle, Number(noOfVehicle), Number(noOfDriver), pocName, contactNumber,
                 repeats, repeatsOn, executionDate, executionTime, endsOn, periodStartDate, periodEndDate, duration, serviceProvider, user, driver, tripRemarks,
-                serviceMode, serviceType, preParkDate, preParkQty)
+                serviceMode, serviceType, preParkDate, preParkQty, unitOwnFund, wogTSP)
 
             await updateMVIndentByTemplate(serviceType, indentId, tripNo, typeOfVehicle, driver, user)
         }
@@ -3441,4 +3532,129 @@ const validIndentFieldLength = function (tripRemarks, additionalRemarks, pickupN
         success: 1,
         message: ''
     }
+}
+
+const FilterWOGServiceProvider = async function (serviceModeId, typeOfVehicle) {
+    let serviceMode = await ServiceMode.findByPk(serviceModeId)
+    let chargeType = []
+    if (serviceMode.chargeType.indexOf(',') != -1) {
+        chargeType = serviceMode.chargeType.split(',')
+    } else if (serviceMode.chargeType == ChargeType.MIX) {
+        chargeType = [ChargeType.DAILY, ChargeType.WEEKLY, ChargeType.MONTHLY, ChargeType.YEARLY]
+    } else if (serviceMode.chargeType == ChargeType.TRIP) {
+        chargeType = [ChargeType.TRIP, ChargeType.DAILYTRIP]
+    } else if (serviceMode.chargeType == ChargeType.BLOCKDAILY) {
+        chargeType = [ChargeType.BLOCKDAILY, ChargeType.BLOCKDAILY_1, ChargeType.BLOCKDAILY_2]
+    } else {
+        chargeType = [serviceMode.chargeType]
+    }
+
+    let data = await sequelizeObj.query(
+        `SELECT
+            a.serviceProviderId as id, e.name, GROUP_CONCAT(d.contractPartNo) as contractPartNo
+        FROM contract a 
+        LEFT JOIN contract_detail c on a.contractNo = c.contractNo
+        LEFT JOIN contract_rate d ON c.contractPartNo = d.contractPartNo
+        LEFT JOIN service_provider e on a.serviceProviderId = e.id
+        where 
+        d.status = 'Approved' and d.isInvalid != 1 
+        and e.name like '%(WOG)%'
+        and d.typeOfVehicle = ? and FIND_IN_SET(?, a.serviceModeId) and FIND_IN_SET(?, d.serviceModeId)
+        and (c.endPoint = 'ALL') 
+        and (c.startPoint = 'ALL') 
+        and d.chargeType in (?)
+        
+        and now() between a.startDate and IFNULL(a.extensionDate,a.endDate)
+        and now() between c.startDate and c.endDate
+        GROUP BY e.id, c.endPoint, a.contractNo`,
+        {
+            replacements: [typeOfVehicle, serviceModeId, serviceModeId, chargeType],
+            type: QueryTypes.SELECT
+        }
+    );
+
+    let result = data.sort((a, b) => { return (a.name > b.name) ? 1 : -1 });
+    return result
+}
+
+module.exports.FilterWOGTSP = async function (req, res) {
+    try {
+        let { serviceModeId, typeOfVehicle } = req.body
+        let result = await FilterWOGServiceProvider(serviceModeId, typeOfVehicle)
+        return Response.success(res, result)
+    } catch (ex) {
+        log.error(ex)
+        return Response.success(res, [])
+    }
+}
+
+
+module.exports.SystemCancelTask = async function (taskId) {
+
+    const cancelRemark = "Due to PO number has not been submitted"
+
+    const DoCancelDriver = async function (userId, task, trip) {
+        let taskId = task.id
+        let requestId = task.requestId
+        let externalJobId = task.externalJobId
+        let taskStatus = TASK_STATUS.CANCELLED
+        if (externalJobId != null) {
+            let msg = Buffer.from(JSON.stringify({
+                externalJobId: externalJobId, operatorId: userId,
+                serviceProviderId: task.serviceProviderId, createdAt: moment().format('YYYY-MM-DD HH:mm:ss'),
+                requestId: task.requestId,
+                tripId: task.tripId,
+                taskId: task.id
+            }))
+            activeMQ.publicCancelJobMsg(msg)
+        }
+        // ack
+        await atmsAckService.SaveATMSAck(trip, [task], 'C', 'C', userId)
+
+        // WOG
+        await CancelledWogTasks([task], userId)
+
+        await sequelizeObj.transaction(async (t1) => {
+            await Task2.update({
+                taskStatus: taskStatus,
+                cancellationTime: new Date(),
+            }, { where: { id: taskId } })
+            await insertHistory(requestId, task.tripId, taskId)
+
+
+            let count = await Task2.count({
+                where: {
+                    tripId: trip.id,
+                    taskStatus: {
+                        [Op.not]: 'cancelled'
+                    }
+                }
+            })
+            if (count == 0) {
+                await Job2.update({
+                    status: INDENT_STATUS.CANCELLED,
+                }, { where: { id: task.tripId } })
+                await insertHistory(requestId, task.tripId, null)
+            }
+        })
+    }
+
+    const insertHistory = async function (indentId, tripId, taskId) {
+        let data = {
+            requestId: indentId,
+            tripId: tripId,
+            taskId: taskId,
+            operatorId: 0,
+            status: TASK_STATUS.CANCELLED,
+            action: "System Cancel",
+            remark: cancelRemark,
+        }
+        log.info(`Operation Record: ${data}`)
+        await OperationHistory.create(data)
+    }
+
+    let userId = 0
+    let task = await Task2.findByPk(taskId)
+    let trip = await Job2.findByPk(task.tripId)
+    await DoCancelDriver(userId, task, trip)
 }

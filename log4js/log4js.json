@@ -41,6 +41,14 @@
       "compress": true,
       "alwaysIncludePattern": true
     },
+    "SystemCancelInfo": {
+      "type": "dateFile",
+      "filename": "./logs/systemCancelNonBus/info",
+      "pattern": "yyyy-MM-dd.log",
+      "numBackups": 180,
+      "compress": true,
+      "alwaysIncludePattern": true
+    },
     "stdout": {
       "type": "console"
     }
@@ -50,6 +58,7 @@
     "error": { "appenders": ["error", "stdout"], "level": "error" },
     "MQInfo": { "appenders": ["MQInfo", "stdout"], "level": "info" },
     "SystemSendTo3rdInfo": { "appenders": ["SystemSendTo3rdInfo", "stdout"], "level": "info" },
-    "SystemReceiveFrom3rdInfo": { "appenders": ["SystemReceiveFrom3rdInfo", "stdout"], "level": "info" }
+    "SystemReceiveFrom3rdInfo": { "appenders": ["SystemReceiveFrom3rdInfo", "stdout"], "level": "info" },
+    "SystemCancelInfo": { "appenders": ["SystemCancelInfo", "stdout"], "level": "info" }
   }
 }

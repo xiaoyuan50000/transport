@@ -187,6 +187,8 @@ if (!fs.existsSync(indentPath)) fs.mkdirSync(indentPath);
 let invoicePath = path.join('./', 'public/download/invoice/');
 if (!fs.existsSync(invoicePath)) fs.mkdirSync(invoicePath);
 
+let systemCancelService = require('./services/systemCancelService.js');
+systemCancelService.scheduleStart()
 /**
  * Init ActiveMQ Client
  */

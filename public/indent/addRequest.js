@@ -14,6 +14,8 @@ let tripHtml = $("#tripHtml").html()
 let fuelHtml = $("#fuelHtml").html()
 // let occ = ["OCC Mgr"]
 let isATMS = false
+let showUnitOwnFund = true
+let isCreatedByRQ = true
 
 let tripModal = new bootstrap.Modal(document.getElementById('tripModal'))
 $(function () {
@@ -29,6 +31,8 @@ $(function () {
         dropoffNotes = ""
         CleanTemplateIndentHtml()
         isATMS = false
+        showUnitOwnFund = true
+        isCreatedByRQ = true
     })
     tripModalElem.addEventListener('show.bs.modal', async function (event) {
         StopRefreshIndent()
@@ -57,7 +61,10 @@ $(function () {
             if (roleName != "RF" && occ.indexOf(roleName) == -1) {
                 await initServiceType()
                 await GetTemplateIndentList()
+            } else {
+                showUnitOwnFund = false
             }
+
         }
         else {
             let indent = await GetIndent(indentId)
@@ -75,13 +82,16 @@ $(function () {
 
                 await initTripAction1(action, indentId, button)
                 PurposeTrainingDisabledMV()
+
+                if (roleName == "RF" || occ.indexOf(roleName) != -1) {
+                    showUnitOwnFund = false
+                }
             }
             else {
                 let tripId = button.getAttribute('data-bs-trip')
                 let tripNo = button.getAttribute('data-bs-tripno')
                 // console.log(tripNo);
                 initTripAction2(action, indentId, modalTitle, tripNo, tripId)
-
             }
         }
     })
@@ -172,6 +182,7 @@ const PurposeTrainingDisabledMV = function () {
 const SetTripDatas = async function (tripId) {
     let trip = await GetTripById(tripId)
     isATMS = trip.referenceId !== undefined && trip.referenceId !== null;
+    isCreatedByRQ = trip.isCreatedByRQ
     pickupNotes = trip.pickupNotes
     dropoffNotes = trip.dropoffNotes
     // console.log(trip)
@@ -238,6 +249,10 @@ const SetTripDatas = async function (tripId) {
         if (trip.driver) {
             $("#noOfDriver").val(trip.noOfDriver);
         }
+
+        $(`input[type=radio][name='unitOwnFund'][value="${trip.unitOwnFund}"]`).attr("checked", 'checked')
+        await onChangeUnitOwnFund(trip.unitOwnFund)
+        $("#wogTSP").val(trip.wogTSP)
     }
     else {
         $("#fuelResource").val(trip.vehicleType)
@@ -291,6 +306,8 @@ const changeTypeOfVehicle = async function (vehicle = null) {
             $("#preParkDate").val('')
         }
     }
+
+    await initTSP()
 }
 
 const DisableIndentForm = function (disabled) {
@@ -334,6 +351,13 @@ const DisableTripForm = function (disabled) {
     $("#fuelStartDate").attr("disabled", disabled)
     $("#fuelEndDate").attr("disabled", disabled)
     $("#fuelRemarks").attr("disabled", disabled)
+    $("#preParkQty").attr("disabled", disabled)
+
+    $("input[name='unitOwnFund']").each(function () {
+        $(this).attr("disabled", disabled)
+    })
+    $("#wogTSP").attr("disabled", disabled)
+
 }
 
 const SetDataToIndentForm = async function (indent) {
@@ -557,8 +581,64 @@ const InitRecurring = async function () {
 const addIndentEventListener = function () {
     $ServiceType.on("change", async function () {
         let serviceType = $(this).val()
+        let selectedText = $(this).find('option:selected').text();
         await initServiceMode(serviceType);
+        initUnitOwnFund(selectedText)
     })
+}
+
+// Unit Own Fund
+const initUnitOwnFund = function (serviceType) {
+    $("#wogTSP").empty()
+    $("#wogTSP").append('<option value=""></option>')
+    $("#wogTSP").attr("disabled", true)
+
+    if (serviceType && serviceType.toLowerCase().indexOf("bus") != -1 && showUnitOwnFund && isCreatedByRQ) {
+        $("#unit-own-fund-row").show()
+    } else {
+        $("#unit-own-fund-row").hide()
+        $(`#unit-own-fund-row input[type=radio][value="0"]`).prop("checked", true)
+        $("#wogTSP").val("")
+    }
+}
+
+const changeUnitOwnFund = function (e) {
+    let val = $(e).val()
+    $("#wogTSP").val("")
+    onChangeUnitOwnFund(val)
+}
+
+const onChangeUnitOwnFund = async function (val) {
+    if (val == 1) {
+        $("#wogTSP").attr("disabled", false)
+        await initTSP()
+    } else {
+        $("#wogTSP").attr("disabled", true)
+    }
+}
+
+const initTSP = async function () {
+    let serviceModeId = $("#serviceMode").val()
+    let typeOfVehicle = $("#typeOfVehicle").val()
+    let unitOwnFund = $(`#unit-own-fund-row input[type=radio][value="1"]`).prop("checked")
+    initUnitOwnFund($("#serviceType").find('option:selected').text())
+    if (serviceModeId && typeOfVehicle && unitOwnFund) {
+        await axios.post("/indent/filterWOGTSP", { serviceModeId, typeOfVehicle }).then(res => {
+            let datas = res.data.data
+
+            let data = datas.map(item => {
+                return `<option value="${item.id}">${item.name}</option>`
+            }).join('')
+
+            $("#wogTSP").append(DOMPurify.sanitize(data))
+        })
+    }
+
+    if (!unitOwnFund) {
+        $("#wogTSP").attr("disabled", true)
+    } else {
+        $("#wogTSP").attr("disabled", false)
+    }
 }
 
 const changeServiceMode = async function (e) {
@@ -576,6 +656,8 @@ const changeServiceMode = async function (e) {
     } else {
         $("#duration").attr("disabled", false)
     }
+
+    initTSP()
 }
 
 const changeRecurring = function (e) {
@@ -767,6 +849,13 @@ const GetTripDatas = function () {
     if (data.preParkDate) {
         data.preParkQty = $("#preParkQty").val()
     }
+    let unitOwnFund = $('input[type="radio"][name="unitOwnFund"]:checked').val()
+    data.unitOwnFund = unitOwnFund == "1"
+    if (data.unitOwnFund) {
+        data.wogTSP = $("#wogTSP").val() || null
+    } else {
+        data.wogTSP = null
+    }
     console.log(data)
     return data
 }
@@ -911,9 +1000,9 @@ const validateRequiredField = (data, key) => {
         noOfDriver: 'No. Of Driver',
         serviceProvider: 'Service Provider', pocName: 'POC', contactNumber: 'Mobile Number', repeats: 'Recurring', executionDate: 'Execution Date',
         executionTime: 'Execution Time', duration: 'Duration', periodStartDate: 'Start Date', periodEndDate: 'End Date', driver: 'Driver',
-        tripRemarks: 'Trip Remarks', endsOn: 'Ends On', repeatsOn: 'Repeat On', preParkDate: 'Pre Park Date', preParkQty: 'No. Of Pre-Park'
+        tripRemarks: 'Trip Remarks', endsOn: 'Ends On', repeatsOn: 'Repeat On', preParkDate: 'Pre Park Date', preParkQty: 'No. Of Pre-Park', wogTSP: 'TSP'
     }
-    if (data[key] == "" && key != "driver") {
+    if (data[key] == "" && key != "driver" && key != "unitOwnFund" && key != "wogTSP" || key == "wogTSP" && data['unitOwnFund'] == 1 && data['wogTSP'] == "") {
         simplyAlert(errorLabel[key] + " is required.")
         return false
     }
@@ -1140,6 +1229,14 @@ const GetEditFormData = function () {
     if (data.preParkDate) {
         data.preParkQty = $("#preParkQty").val()
     }
+
+    let unitOwnFund = $('input[type="radio"][name="unitOwnFund"]:checked').val()
+    data.unitOwnFund = unitOwnFund == "1"
+    if (data.unitOwnFund) {
+        data.wogTSP = $("#wogTSP").val() || null
+    } else {
+        data.wogTSP = null
+    }
     return data
 }
 
@@ -1223,6 +1320,8 @@ const CreateIndentAndTripWithoutTemplate = function () {
         } else {
             let data = GetTripDatas()
             let isOK = ValidTripForm(data)
+            console.log(data);
+            // return
             if (isOK) {
                 DisableButton(true)
                 axios.post("/indent/create", { indent: createIndentData, trip: data }).then((res) => {

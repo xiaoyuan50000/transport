@@ -642,7 +642,7 @@ module.exports.AffectTaskAccept = async function (body) {
 
         let trip = await Job2.findByPk(task.tripId)
         let contractPartNo = await requestService.GetContractPartNo(trip.vehicleType, trip.serviceModeId,
-            trip.dropoffDestination, trip.pickupDestination, task.executionDate, serviceProviderId, task.executionTime)
+            trip.dropoffDestination, trip.pickupDestination, task.executionDate, serviceProviderId, task.executionTime, trip.unitOwnFund)
 
         let idList = pendingCancelledTaskList.map(o => o.id)
 

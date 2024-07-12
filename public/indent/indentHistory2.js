@@ -74,8 +74,9 @@ $(function () {
                 }
                 content += `<li class="custom-timeline-item custom-timeline-item-${tripClass}">
                         <div class="custom-timeline-status custom-timeline-content-action text-capitalize" ${changeHistoryHtml}>${action}</div>
-                        <div class="row custom-timeline-content mt-1">
-                            <div class="mb-2">
+                        <div class="row custom-timeline-content mt-1">`
+                if (row.action != 'System Cancel') {
+                    content += `<div class="mb-2">
                                 <label class="fw-bold">${username}${getRole(role)}</label>
                             </div>
                             <div class="mb-2">
@@ -83,8 +84,9 @@ $(function () {
                             </div>
                             <div class="mb-2">
                             <label class="fw-bold">${getEmail(row.email)}</label>
-                            </div>
-                            <div class="mb-2">
+                            </div>`
+                }
+                content += `<div class="mb-2">
                                 <label class="color-time">${createdAt}</label>
                             </div>
                             <div class="mb-2">
@@ -179,7 +181,9 @@ const getDriverStatusHtml = function (driverStatus) {
                         </div>`
             remark = ""
         }
-
+        if (row.action == "System Cancel") {
+            action = row.action
+        }
         statusFlow += `<li class="mt-2 custom-timeline-item custom-timeline-item-${itemClass}">
                         <i class="custom-timeline-axis"></i>
                         <div class="row custom-timeline-content">

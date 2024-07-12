@@ -2,22 +2,22 @@
  * DB
  */
 module.exports.dbConf = {
-    host: '192.168.1.5',
-	// host: '192.168.1.11',
+    host: 'localhost',
+	// host: '192.168.1.18',
     user: 'root',
     password: 'root',
     // port: 6446,
     port: 3306,
     // database: 'tms_test_migrate',
-    database: 'tms2',
+    database: 'tms4',
     timezone: 'GMT%2B8',
     multipleStatements: true,
 	connectionLimit: 2000,
 };
 
 module.exports.driverDbConf = {
-    // host: 'localhost',
-    host: '192.168.1.18',
+    host: 'localhost',
+	// host: '192.168.1.18',
     user: 'root',
     password: 'root',
     port: 3306,
@@ -115,3 +115,5 @@ module.exports.auto_assign = false
 module.exports.view_nric = false
 
 module.exports.atms_server_url = 'http://localhost:5022'
+
+module.exports.system_cancel_schedule_cron = '0 */1 * * * *'

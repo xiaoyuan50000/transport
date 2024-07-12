@@ -38,9 +38,9 @@ let feedbackService = require('../services/feedbackService');
 let router = express.Router();
 
 const limiter = rateLimit({
-	windowMs: utils.apiLimiter.windowMs,
-	max: utils.apiLimiter.max,
-	message: utils.apiLimiter.message,
+    windowMs: utils.apiLimiter.windowMs,
+    max: utils.apiLimiter.max,
+    message: utils.apiLimiter.message,
 })
 router.use(limiter)
 
@@ -242,6 +242,9 @@ router.post('/indent/update/tsp', function (req, res, next) {
 },
 );
 
+router.post('/indent/filterWOGTSP', requestService2.FilterWOGTSP);
+
+
 router.post('/indent/getDriverDetail', indentService2.GetDriverDetail);
 router.post('/indent/editDriver', requestService2.EditDriver);
 router.post('/indent/editTaskTime', requestService2.EditTaskTime);
@@ -440,7 +443,7 @@ router.get('/CVIssues', async function (req, res, next) {
         fullName = user.username
         email = user.email
         res.render('cvIssues', { fullName: fullName, email: email });
-    }else{
+    } else {
         res.render('cvLoginIssues');
     }
 });

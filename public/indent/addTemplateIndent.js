@@ -75,17 +75,20 @@ const GetTemplateIndentList = async function (selectGroupId = null) {
 
 const SetTemplateDataToForm = async function () {
     let index = $('#templateIndentContent .template-indent-li.active').index()
+    console.log(index);
     let data = templateIndentRowList[index]
     let { category, resourceTypeId, trip } = data
     $(`input[type=radio][value="${category}"]`).prop("checked", 'checked')
     filterCategory(category)
     $ServiceType.val(resourceTypeId)
 
+    console.log(trip);
     if (!trip) {
         await setDataWithTemplate(data)
     } else {
         await setDataWithTrip(data)
     }
+
 }
 
 const setDataWithTemplate = async function (data) {
@@ -182,6 +185,13 @@ const setDataWithTrip = async function (data) {
     if (trip.driver) {
         $("#noOfDriver").val(trip.noOfDriver);
     }
+
+    console.log(trip);
+    let unitOwnFund = trip.unitOwnFund ? 1 : 0
+    $(`input[type=radio][name='unitOwnFund'][value="${unitOwnFund}"]`).attr("checked", 'checked')
+    await onChangeUnitOwnFund(unitOwnFund)
+    $("#wogTSP").val(trip.wogTSP)
+
     // }
     // else {
     //     $("#fuelResource").val(trip.typeOfVehicle)
@@ -248,10 +258,17 @@ const saveTemplateIndent = function () {
                     repeatsOn: activeIndentRow.trip.repeatsOn,
                     pocName: activeIndentRow.trip.pocName,
                     preParkDate: activeIndentRow.trip.preParkDate,
+                    unitOwnFund: activeIndentRow.trip.unitOwnFund,
+                    wogTSP: activeIndentRow.trip.wogTSP,
                 }
                 if (resource == "-") {
                     trip.preParkDate = null
                     trip.preParkQty = null
+                }
+
+                if (row.resourceType.toLowerCase().indexOf('bus') == -1) {
+                    trip.unitOwnFund = 0
+                    trip.wogTSP = null
                 }
 
                 if (trip.preParkDate) {
