@@ -1437,6 +1437,9 @@ module.exports.ShowChangeOfIndent = async function (req, res) {
             executionDate: `${obj.executionDate} ${obj.executionTime}`,
             duration: obj.duration,
             tripRemarks: obj.tripRemarks,
+            periodStartDate: obj.periodStartDate,
+            periodEndDate: obj.periodEndDate,
+            preParkDate: obj.preParkDate,
         }
     }
 

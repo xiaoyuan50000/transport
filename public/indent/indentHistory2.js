@@ -329,6 +329,15 @@ const showChange = async function (jobHistoryId) {
             case 'tripRemarks':
                 name = "Trip Remarks";
                 break;
+            case 'periodStartDate':
+                name = "Start Date";
+                break;
+            case 'periodEndDate':
+                name = "End Date";
+                break;
+            case 'preParkDate':
+                name = "Prepark Date";
+                break;
             default:
                 break;
         }

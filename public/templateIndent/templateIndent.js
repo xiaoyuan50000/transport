@@ -330,13 +330,16 @@ const ValidTemplateIndentForm = function (data) {
     let errorLabel = {
         category: 'Category',
         resourceTypeId: 'Resource Type',
+        resourceType: 'Resource Type',
         serviceModeId: 'Service Mode',
+        serviceMode: 'Service Mode',
         resource: 'Resource',
         noOfVehicle: 'No. Of Resource',
         noOfDriver: 'No. Of Driver',
+        driver: 'Driver'
     }
     if (data.category == 'CV' || data.category == 'MV') {
-        let keyList = ['category', 'resourceTypeId', 'serviceModeId', 'resource']
+        let keyList = ['category', 'resourceTypeId', 'serviceModeId', 'resource', 'noOfVehicle', 'noOfDriver', 'resourceType', 'serviceMode', 'driver']
         for (let key in data) {
             if (!ValidTemplateIndentField(data, key, keyList, errorLabel)) {
                 return false
@@ -351,19 +354,19 @@ const ValidTemplateIndentForm = function (data) {
 }
 
 const isFiledEmpty = function (data, key, keyList) {
-    return data[key] == "" && keyList.indexOf(key) != -1
+    return data[key] != "" && keyList.indexOf(key) != -1
 }
 
 const isNoOfVehicleFiledEmpty = function (data, key) {
-    return data[key] == "" && key == 'noOfVehicle' && data.resource != "-"
+    return data[key] != "" && data.resource != "-"
 }
 
 const ValidTemplateIndentField = function (data, key, keyList, errorLabel) {
-    if (!isFiledEmpty(data, key, keyList)) {
+    if (!isFiledEmpty(data, key, keyList) && key != 'driver' && key != 'noOfDriver' && key != 'id') {
         simplyAlert(errorLabel[key] + " is required.")
         return false
     }
-    if (!isNoOfVehicleFiledEmpty(data, key)) {
+    if (!isNoOfVehicleFiledEmpty(data, key) && key == 'noOfVehicle') {
         simplyAlert(errorLabel[key] + " is required.")
         return false
     }

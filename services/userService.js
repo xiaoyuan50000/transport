@@ -95,7 +95,7 @@ const doCreateUser = async function (req, res, isPoc) {
     const getLoginInfo = function (isPoc, isCreate, pwd, mobileNumber, nric, username) {
         if (isPoc) {
             let password = pwd
-            let username = mobileNumber
+            // let username = mobileNumber
             return { password, username, loginName: "" }
         } else if (isCreate) {
             let loginName = utils.GetLoginName(nric, username)
@@ -199,9 +199,6 @@ const doCreateUser = async function (req, res, isPoc) {
         }
 
         let loginInfo = getLoginInfo(isPoc, isCreate, req.body.password, mobileNumber, nric, username)
-        password = loginInfo.password
-        username = loginInfo.username
-        loginName = loginInfo.loginName
 
         let { groupId, groupName } = await getGroupInfo(req.body.group)
 
@@ -209,9 +206,13 @@ const doCreateUser = async function (req, res, isPoc) {
 
         let serviceProviderId = getServiceProvider(req.body.serviceProvider);
 
-        let actionRecord = getOperatorRecord(operatorId)
+        let actionRecord = await getOperatorRecord(operatorId)
 
         if (isCreate) {
+            password = loginInfo.password
+            username = loginInfo.username
+            loginName = loginInfo.loginName
+
             actionRecord.activity = USER_ACTIVITY.AccountCreation
             let nricAESCode = utils.generateAESCode(nric)
             let createUserObj = {
@@ -249,20 +250,39 @@ const doCreateUser = async function (req, res, isPoc) {
                 || user.group != groupId || user.serviceProviderId != serviceProviderId
                 || user.serviceTypeId != serviceTypeId || formatDate(user.ord) != formatDate(ord) || user.username != username) {
                 let userBase = await getUserBaseByCVUserId(id)
-                let afterUserBase = _.cloneDeep(userBase)
-                afterUserBase.contactNumber = mobileNumber
-                afterUserBase.email = email
-                afterUserBase.cvRole = roleId
-                afterUserBase.cvGroupId = groupId
-                afterUserBase.cvGroupName = groupName
-                afterUserBase.cvServiceProviderId = serviceProviderId
-                afterUserBase.cvServiceTypeId = serviceTypeId
-                afterUserBase.ord = ord
-                afterUserBase.fullName = username
-                afterUserBase.loginName = loginName
-                MVOperationRecord = {
-                    beforeData: JSON.stringify(userBase),
-                    afterData: JSON.stringify(afterUserBase),
+                if (userBase) {
+                    let afterUserBase = _.cloneDeep(userBase)
+                    afterUserBase.contactNumber = mobileNumber
+                    afterUserBase.email = email
+                    afterUserBase.cvRole = roleId
+                    afterUserBase.cvGroupId = groupId
+                    afterUserBase.cvGroupName = groupName
+                    afterUserBase.cvServiceProviderId = serviceProviderId
+                    afterUserBase.cvServiceTypeId = serviceTypeId
+                    afterUserBase.ord = ord
+                    afterUserBase.fullName = username
+                    afterUserBase.loginName = loginName
+                    MVOperationRecord = {
+                        beforeData: JSON.stringify(userBase),
+                        afterData: JSON.stringify(afterUserBase),
+                    }
+                } else {
+                    let user = await User.findByPk(id)
+                    let afterUserBase = _.cloneDeep(user)
+                    afterUserBase.contactNumber = mobileNumber
+                    afterUserBase.email = email
+                    afterUserBase.role = roleId
+                    afterUserBase.group = groupId
+                    afterUserBase.groupName = groupName
+                    afterUserBase.serviceProviderId = serviceProviderId
+                    afterUserBase.serviceTypeId = serviceTypeId
+                    afterUserBase.ord = ord
+                    afterUserBase.username = username
+                    afterUserBase.loginName = loginName
+                    MVOperationRecord = {
+                        beforeData: JSON.stringify(userBase),
+                        afterData: JSON.stringify(afterUserBase),
+                    }
                 }
             }
             await sequelizeObj.transaction(async t1 => {

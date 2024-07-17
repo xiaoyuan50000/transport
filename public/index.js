@@ -118,8 +118,12 @@ function setUserName() {
         $(".setting").append(settingDropdown.replace("{{item}}", manageUserBtn))
         removeNoPermissionMenu(["INVOICE", "HISTORY", "CONTRACT", "DASHBOARD", "OPERATIONDASHBOARD", "REPORT", "URGENTTASK", "FEEDBACK"])
     } else if (user.roleName == "RQ") {
+        $(".setting").append(settingDropdown.replace("{{item}}", ""))
+        $(".dropdown-divider").remove()
         removeNoPermissionMenu(["OPEN", "INVOICE", "ARBITRATION", "HISTORY", "CONTRACT", "BUDGET", "MOBIUSTASK", "DASHBOARD", "OPERATIONDASHBOARD", "REPORT", "TEMPLATE", "URGENTTASK", "FEEDBACK"])
     } else if (user.roleName == "TSP") {
+        $(".setting").append(settingDropdown.replace("{{item}}", ""))
+        $(".dropdown-divider").remove()
         removeNoPermissionMenu(["TASK", "JOB", "HISTORY", "CONTRACT", "FUEL", "BUDGET", "MOBIUSTASK", "DASHBOARD", "OPERATIONDASHBOARD", "REPORT", "URGENTTASK", "TEMPLATE", "FEEDBACK"])
     } else if (occ.indexOf(user.roleName) != -1) {
         if (user.roleName == occ[0]) {
@@ -548,6 +552,7 @@ const getMobiusUserExist = async function () {
             // $('.phone24h').closest('ul').prepend(`<li><img class="me-2" style="cursor: pointer" src="../images/redirect.svg" id="redirect" title="Register MV Account"></li>`)
             $('.setting .dropdown-menu').append(`<li><a class="dropdown-item" href="#" id="redirect" data-target="-1"><img style="cursor: pointer" src="../images/redirect.svg" title="Register MV Account">Register MV Account</a></li>`)
         }
+
 
         $("#redirect").off('click').on('click', async function () {
             await axios.post("/getMobiusUserExist").then(res => {
