@@ -246,13 +246,22 @@ const QueryEndorseDatas = async function (reqParams) {
 
     let whereSql = ``;
     let filter1 = filterByUserRole(currentUserRole, user, mvServiceTypeIds, isEndorse, endorsed)
-    addWhereSql(filter1, whereSql, replacements)
+    if (filter1.whereSql) {
+        whereSql += filter1.whereSql
+        replacements.push(...filter1.replacements)
+    }
 
     let filter2 = filerByEndorseStatus(endorseTaskStatus)
-    addWhereSql(filter2, whereSql, replacements)
+    if (filter2.whereSql) {
+        whereSql += filter2.whereSql
+        replacements.push(...filter2.replacements)
+    }
 
     let filter3 = filterByExecutionDate(execution_date)
-    addWhereSql(filter3, whereSql, replacements)
+    if (filter3.whereSql) {
+        whereSql += filter3.whereSql
+        replacements.push(...filter3.replacements)
+    }
 
 
     if (isNotEmptyNull(vehicleType)) {
@@ -392,14 +401,15 @@ const QueryEndorseDatas = async function (reqParams) {
     return { data: pageResult, recordsFiltered: totalRecord, recordsTotal: totalRecord, user: user }
 }
 
-const addWhereSql = function (filters, whereSql, replacements) {
-    if (filters.whereSql) {
-        whereSql += filters.whereSql
-    }
-    if (filters.replacements) {
-        replacements.push(...filters.replacements)
-    }
-}
+// const addWhereSql = function (filters, whereSql, replacements) {
+//     if (filters.whereSql) {
+//         whereSql += filters.whereSql
+//     }
+//     if (filters.replacements) {
+//         replacements.push(...filters.replacements)
+//     }
+//     return { whereSql, replacements }
+// }
 
 const filterByUserRole = function (currentUserRole, user, mvServiceTypeIds, isEndorse, endorsed) {
     let whereSql = ""
