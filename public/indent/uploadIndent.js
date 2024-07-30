@@ -3,7 +3,7 @@ function uploadFile(e) {
     let filename = file.name;
 
     if (!isExcel(filename)) {
-        simplyAlert('The file type must be csv.', 'red');
+        simplyAlert('The file type must be xlsx/csv.', 'red');
         return
     }
 
@@ -15,8 +15,8 @@ function uploadFile(e) {
         headers: { "Content-Type": "multipart/form-data;" }
     };
 
-    // axios.post('/upload/indent', param, config).then(function (res) {
-    axios.post('/atms/upload/indent', param, config).then(function (res) {
+    axios.post('/upload/indent', param, config).then(function (res) {
+    // axios.post('/atms/upload/indent', param, config).then(function (res) {
         if (res.data.code == 1) {
             simplyAlert('Upload Success.');
             // console.log(res.data.data)
@@ -32,5 +32,5 @@ function uploadFile(e) {
 
 function isExcel(filename) {
     let extension = filename.substring(filename.lastIndexOf('.') + 1);
-    return extension === 'csv';
+    return extension === 'xlsx' || extension === 'csv';
 }

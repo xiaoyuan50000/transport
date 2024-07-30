@@ -101,7 +101,7 @@ let table;
                     dom.href = url
                     dom.download = decodeURI(fileName)
                     dom.style.display = 'none'
-                    document.body.appendChild(DOMPurify.sanitize(dom))
+                    document.body.appendChild(dom)
                     dom.click()
                     dom.parentNode.removeChild(dom)
                     window.URL.revokeObjectURL(url)

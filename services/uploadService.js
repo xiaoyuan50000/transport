@@ -90,64 +90,64 @@ const indent_path = conf.upload_indent_path;
 //         return Response.error(res, err.message);
 //     });
 // }
-module.exports.uploadJobFile = async function (req, res) {
-    if (!fs.existsSync(indent_path)) {
-        fs.mkdir(path.resolve(indent_path), { recursive: true }, (err) => {
-            if (err) {
-                return Response.error(res, err.message);
-            }
-        });
-    }
+// module.exports.uploadJobFile = async function (req, res) {
+//     if (!fs.existsSync(indent_path)) {
+//         fs.mkdir(path.resolve(indent_path), { recursive: true }, (err) => {
+//             if (err) {
+//                 return Response.error(res, err.message);
+//             }
+//         });
+//     }
 
-    let form = formidable({
-        encoding: 'utf-8',
-        uploadDir: indent_path,
-        keepExtensions: false,
-        maxFileSize: 1024 * 1024 * 1024,
-    });
+//     let form = formidable({
+//         encoding: 'utf-8',
+//         uploadDir: indent_path,
+//         keepExtensions: false,
+//         maxFileSize: 1024 * 1024 * 1024,
+//     });
 
-    form.parse(req, (err, fields, files) => {
-        try {
-            let filename = fields.filename;
-            let userId = req.body.userId;
-            if (!filename) {
-                return Response.error(res, 'Upload error! Filename is empty!');
-            }
-            filename = utils.getSafeFileName(filename)
-            let extension = filename.substring(filename.lastIndexOf('.') + 1);
-            if (extension !== 'xlsx') {
-                return Response.error(res, 'The file type must be xlsx.');
-            }
-            let oldPath = path.join(process.cwd(), files.file.path);
-            let newPath = path.join(process.cwd(), indent_path, filename);
+//     form.parse(req, (err, fields, files) => {
+//         try {
+//             let filename = fields.filename;
+//             let userId = req.body.userId;
+//             if (!filename) {
+//                 return Response.error(res, 'Upload error! Filename is empty!');
+//             }
+//             filename = utils.getSafeFileName(filename)
+//             let extension = filename.substring(filename.lastIndexOf('.') + 1);
+//             if (extension !== 'xlsx') {
+//                 return Response.error(res, 'The file type must be xlsx.');
+//             }
+//             let oldPath = path.join(process.cwd(), files.file.path);
+//             let newPath = path.join(process.cwd(), indent_path, filename);
 
-            fs.renameSync(oldPath, newPath);
+//             fs.renameSync(oldPath, newPath);
 
-            readExcel(newPath, async (titles, indents) => {
-                if (!ValidExcelTitles(titles)) {
-                    return Response.error(res, "Upload failed. Invalid Excel.");
-                }
-                try {
-                    let { indentNos, resultJson } = GetAllExcelDatasJSON(indents)
-                    let indentList = await GetDatas(indentNos, resultJson, userId)
-                    await CreateIndents(indentList, userId)
-                    return Response.success(res);
-                } catch (err) {
-                    log.error(err);
-                    return Response.error(res, "Upload failed. " + err);
-                }
-            });
-        } catch (err) {
-            log.error(err);
-            return Response.error(res, err.message);
-        }
-    });
+//             readExcel(newPath, async (titles, indents) => {
+//                 if (!ValidExcelTitles(titles)) {
+//                     return Response.error(res, "Upload failed. Invalid Excel.");
+//                 }
+//                 try {
+//                     let { indentNos, resultJson } = GetAllExcelDatasJSON(indents)
+//                     let indentList = await GetDatas(indentNos, resultJson, userId)
+//                     await CreateIndents(indentList, userId)
+//                     return Response.success(res);
+//                 } catch (err) {
+//                     log.error(err);
+//                     return Response.error(res, "Upload failed. " + err);
+//                 }
+//             });
+//         } catch (err) {
+//             log.error(err);
+//             return Response.error(res, err.message);
+//         }
+//     });
 
-    form.on('error', function (err) {
-        log.error(err);
-        return Response.error(res, err.message);
-    });
-}
+//     form.on('error', function (err) {
+//         log.error(err);
+//         return Response.error(res, err.message);
+//     });
+// }
 
 function readExcel(path, callback) {
     let obj = xlsx.parse(path);
@@ -924,6 +924,95 @@ module.exports.newContract = async function (req, res) {
                 await ContractRate.bulkCreate(contractRates, { transaction: t1 })
             })
             return Response.success(res, dataArray);
+        } catch (err) {
+            log.error(err);
+            return Response.error(res, err.message);
+        }
+    });
+
+    form.on('error', function (err) {
+        log.error(err);
+        return Response.error(res, err.message);
+    });
+}
+
+
+const XLSX = require('xlsx');
+const axios = require('axios');
+const FormData = require('form-data');
+module.exports.uploadJobFile = async function (req, res) {
+    if (!fs.existsSync(indent_path)) {
+        fs.mkdir(path.resolve(indent_path), { recursive: true }, (err) => {
+            if (err) {
+                return Response.error(res, err.message);
+            }
+        });
+    }
+
+    const form = new formidable.IncomingForm({
+        encoding: 'utf-8',
+        uploadDir: indent_path,
+        keepExtensions: false,
+        maxFileSize: 1024 * 1024 * 1024,
+    });
+
+    form.parse(req, (err, fields, files) => {
+        try {
+            let filename = fields.filename[0];
+            if (!filename) {
+                return Response.error(res, 'Upload error! Filename is empty!');
+            }
+            filename = utils.getSafeFileName(filename)
+            let extension = filename.substring(filename.lastIndexOf('.') + 1);
+            if (extension !== 'xlsx' && extension !== 'csv') {
+                return Response.error(res, 'The file type must be xlsx/csv.');
+            }
+            let oldPath = files.file[0].filepath;
+            let newPath = path.join(process.cwd(), indent_path, filename);
+
+            fs.renameSync(oldPath, newPath);
+
+            if (extension === 'xlsx') {
+                const workbook = XLSX.readFile(newPath);
+                const sheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                const csv = XLSX.utils.sheet_to_csv(worksheet, { FS: '|' });
+                let datas = csv.split('\n')
+                datas = datas.slice(1)
+                datas.push(`FF|${datas.length}`)
+                const newCSV = datas.join('\n')
+                const csvFileName = filename.substring(0, filename.lastIndexOf('.') + 1) + 'csv';
+                newPath = path.join(process.cwd(), indent_path, csvFileName);
+                fs.writeFileSync(newPath, newCSV);
+            }
+
+            let param = new FormData();
+            const fileStream = fs.createReadStream(newPath);
+            param.append('file', fileStream);
+            param.append('filename', filename);
+
+            const url = new URL(conf.atms_server_url);
+            const host = url.hostname;
+            const port = url.port;
+            const config = {
+                headers: { "Content-Type": "multipart/form-data;" },
+                proxy: {
+                    host: host,
+                    port: port
+                }
+            };
+            axios.post('/upload/indent', param, config).then(function (result) {
+                if (result.data.code == 1) {
+                    return Response.success(res, true);
+                } else if (result.data.code == 0) {
+                    return Response.error(res, result.data.msg);
+                }
+            }).catch(function (error) {
+                log.error(error);
+                return Response.error(res, error.message);
+            });
+
+            // return Response.success(res, true);
         } catch (err) {
             log.error(err);
             return Response.error(res, err.message);
