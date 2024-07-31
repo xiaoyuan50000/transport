@@ -1141,15 +1141,17 @@ const BeforeEditTrip = async function (trip, roleName, serviceType, createdBy) {
         }
     })
     // Restore pending
-    await contractService.ContractBalanceAction.resetPendingBalance(taskIdArray)
-
-    await InitialPurchaseOrder.destroy({
-        where: {
-            taskId: {
-                [Op.in]: taskIdArray
+    if (taskIdArray.length > 0) {
+        await contractService.ContractBalanceAction.resetPendingBalance(taskIdArray)
+    
+        await InitialPurchaseOrder.destroy({
+            where: {
+                taskId: {
+                    [Op.in]: taskIdArray
+                }
             }
-        }
-    })
+        })
+    }
     return { exist: 0, jobHistoryId: jobHistoryIds[0], alreadySendDataTasks: alreadySendDataTasks, jobHistoryIds }
 }
 module.exports.BeforeEditTrip = BeforeEditTrip

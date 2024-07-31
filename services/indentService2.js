@@ -271,7 +271,7 @@ const QueryIndentsByFilter = async function (roleName, action, execution_date,
         LEFT JOIN \`group\` c ON a.groupId = c.id
         LEFT JOIN service_type st on b.serviceTypeId = st.id
         LEFT JOIN service_mode sm on b.serviceModeId = sm.id
-        WHERE 1=1 and a.purposeType != 'Urgent' ${filter} GROUP BY b.requestId, e.tripId ${orderBySql}`,
+        WHERE 1=1 and a.purposeType != 'Urgent' ${filter} GROUP BY b.requestId, b.id ${orderBySql}`,
         {
             replacements: replacements,
             type: QueryTypes.SELECT
@@ -290,7 +290,7 @@ const GetIndentIdByLimit = async function (replacements, filter, pageNum, pageLe
                     LEFT JOIN job_task e ON b.id = e.tripId
                     LEFT JOIN \`group\` c ON a.groupId = c.id
                     LEFT JOIN service_type st on b.serviceTypeId = st.id
-                    WHERE 1=1 and a.purposeType != 'Urgent' ${filter} GROUP BY b.requestId, e.tripId ORDER BY a.createdAt DESC) a`
+                    WHERE 1=1 and a.purposeType != 'Urgent' ${filter} GROUP BY b.requestId, b.id ORDER BY a.createdAt DESC) a`
     let count = 0
 
     let datas = await sequelizeObj.query(
