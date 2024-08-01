@@ -209,12 +209,8 @@ const saveUser = async function () {
 }
 
 const cleanDataTable = function () {
-    if (table) {
-        // table.destroy();
-        $('.user-table').empty();
-    }
-    if (table1) {
-        // table1.destroy();
+    if (table || table1) {
+        $('.user-table').DataTable().destroy();
         $('.user-table').empty();
     }
 }
