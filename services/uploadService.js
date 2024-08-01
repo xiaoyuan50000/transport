@@ -36,7 +36,7 @@ const indent_path = conf.upload_indent_path;
 //     if (!fs.existsSync(indent_path)) {
 //         fs.mkdir(path.resolve(indent_path), { recursive: true }, (err) => {
 //             if (err) {
-//                 return Response.error(res, err.message);
+//                 return Response.error(res, "Upload Failed.");
 //             }
 //         });
 //     }
@@ -81,20 +81,20 @@ const indent_path = conf.upload_indent_path;
 //             });
 //         } catch (err) {
 //             log.error(err);
-//             return Response.error(res, err.message);
+//             return Response.error(res, "Upload Failed.");
 //         }
 //     });
 
 //     form.on('error', function (err) {
 //         log.error(err);
-//         return Response.error(res, err.message);
+//         return Response.error(res, "Upload Failed.");
 //     });
 // }
 // module.exports.uploadJobFile = async function (req, res) {
 //     if (!fs.existsSync(indent_path)) {
 //         fs.mkdir(path.resolve(indent_path), { recursive: true }, (err) => {
 //             if (err) {
-//                 return Response.error(res, err.message);
+//                 return Response.error(res, "Upload Failed.");
 //             }
 //         });
 //     }
@@ -139,13 +139,13 @@ const indent_path = conf.upload_indent_path;
 //             });
 //         } catch (err) {
 //             log.error(err);
-//             return Response.error(res, err.message);
+//             return Response.error(res, "Upload Failed.");
 //         }
 //     });
 
 //     form.on('error', function (err) {
 //         log.error(err);
-//         return Response.error(res, err.message);
+//         return Response.error(res, "Upload Failed.");
 //     });
 // }
 
@@ -638,13 +638,13 @@ module.exports.uploadOldIndentFile = async function (req, res) {
             return Response.success(res, true);
         } catch (err) {
             log.error(err);
-            return Response.error(res, err.message);
+            return Response.error(res, "Upload Failed.");
         }
     });
 
     form.on('error', function (err) {
         log.error(err);
-        return Response.error(res, err.message);
+        return Response.error(res, "Upload Failed.");
     });
 }
 
@@ -926,13 +926,13 @@ module.exports.newContract = async function (req, res) {
             return Response.success(res, dataArray);
         } catch (err) {
             log.error(err);
-            return Response.error(res, err.message);
+            return Response.error(res, "Upload Failed.");
         }
     });
 
     form.on('error', function (err) {
         log.error(err);
-        return Response.error(res, err.message);
+        return Response.error(res, "Upload Failed.");
     });
 }
 
@@ -940,11 +940,15 @@ module.exports.newContract = async function (req, res) {
 const XLSX = require('xlsx');
 const axios = require('axios');
 const FormData = require('form-data');
+const { sequelizeDriverObj } = require('../sequelize/dbConf-driver');
+const { User } = require('../model/user.js');
+
 module.exports.uploadJobFile = async function (req, res) {
     if (!fs.existsSync(indent_path)) {
         fs.mkdir(path.resolve(indent_path), { recursive: true }, (err) => {
             if (err) {
-                return Response.error(res, err.message);
+                log.error(err)
+                return Response.error(res, "Upload Failed.");
             }
         });
     }
@@ -956,7 +960,7 @@ module.exports.uploadJobFile = async function (req, res) {
         maxFileSize: 1024 * 1024 * 1024,
     });
 
-    form.parse(req, (err, fields, files) => {
+    form.parse(req, async (err, fields, files) => {
         try {
             let filename = fields.filename[0];
             if (!filename) {
@@ -972,55 +976,189 @@ module.exports.uploadJobFile = async function (req, res) {
 
             fs.renameSync(oldPath, newPath);
 
+            let uploadPath = newPath
             if (extension === 'xlsx') {
+                let userId = req.body.userId;
+                let user = User.findByPk(userId)
+                let requestorName = user ? user.username : ""
+                let locationList = await Location.findAll()
+                let hubNodeList = await GetMobiusUnit()
+                let purposeModeList = await PurposeMode.findAll()
+                let ngtsVehicleList = await GetNGTSVehicle()
+
                 const workbook = XLSX.readFile(newPath);
                 const sheetName = workbook.SheetNames[0];
                 const worksheet = workbook.Sheets[sheetName];
-                const csv = XLSX.utils.sheet_to_csv(worksheet, { FS: '|' });
-                let datas = csv.split('\n')
-                datas = datas.slice(1)
-                datas.push(`FF|${datas.length}`)
-                const newCSV = datas.join('\n')
+                let range = XLSX.utils.decode_range(worksheet['!ref']);
+                range.s.r = 4
+                range.e.c = 16
+                const datas = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, range: range, defval: "" })
+                // log.info(datas)
+                let csvDatas = []
+                let transactionDatetime = moment().format("YYYYMMDDHHmmss")
+                for (let data of datas) {
+                    const [hub, node, indentId, purpose, activityName, resourceType, resourceQty, driverQty,
+                        startDate, startTime, endDate, endTime, reportingLocation, destinationLocation,
+                        pocName, pocMobileNumber, pocUnit] = data
+
+                    let reportingLocationObj = locationList.find(o => o.locationName == reportingLocation)
+                    let reportingLocationId = reportingLocationObj ? reportingLocationObj.id : 0
+                    let destinationLocationObj = locationList.find(o => o.locationName == destinationLocation)
+                    let destinationLocationId = destinationLocationObj ? destinationLocationObj.id : 0
+
+                    let hubNodeObj = hubNodeList.find(o => o.unit == hub && o.subUnit || "" == node)
+                    let conductingUnitCode = ""
+                    if (hubNodeObj && hubNodeObj.group) {
+                        conductingUnitCode = hubNodeObj.group.split(',')[0]
+                    }
+
+                    let purposeObj = purposeModeList.find(o => o.name == purpose)
+                    let purposeNGTSId = purposeObj ? purposeObj.id : 0
+
+                    let startDateTime = moment(`${startDate} ${startTime}`, "DDMMYYYY HH:mm").format("YYYYMMDDHHmmss")
+                    let endDateTime = moment(`${endDate} ${endTime}`, "DDMMYYYY HH:mm").format("YYYYMMDDHHmmss")
+
+                    let ngtsVehicleObj = ngtsVehicleList.find(o => o.resourceType == resourceType)
+                    let ngtsResourceId = ngtsVehicleObj ? ngtsVehicleObj.id : 0
+
+                    let referenceID = `${letterToNumber(Utils.GenerateIndentID1())}-001`
+
+                    csvDatas.push([
+                        referenceID,
+                        "",
+                        "N",
+                        transactionDatetime,
+                        requestorName,
+                        activityName,
+                        conductingUnitCode,
+                        purposeNGTSId,
+                        "Disposal",
+                        ngtsResourceId,
+                        resourceQty,
+                        startDateTime,
+                        endDateTime,
+                        pocUnit,
+                        pocName,
+                        pocMobileNumber,
+                        reportingLocationId,
+                        destinationLocationId,
+                        "",
+                        "",
+                        driverQty,
+                        0,
+                        "",
+                        ""
+                    ].join("|"))
+                }
+                csvDatas.push(`FF|${datas.length}`)
+                const newCSV = csvDatas.join('\n')
                 const csvFileName = filename.substring(0, filename.lastIndexOf('.') + 1) + 'csv';
-                newPath = path.join(process.cwd(), indent_path, csvFileName);
-                fs.writeFileSync(newPath, newCSV);
+                uploadPath = path.join(process.cwd(), indent_path, csvFileName);
+                fs.writeFileSync(uploadPath, newCSV);
+                // const csv = XLSX.utils.sheet_to_csv(worksheet, { FS: '|' });
+                // let datas = csv.split('\n')
+                // datas = datas.slice(1)
+                // datas.push(`FF|${datas.length}`)
+                // const newCSV = datas.join('\n')
+                // const csvFileName = filename.substring(0, filename.lastIndexOf('.') + 1) + 'csv';
+                // uploadPath = path.join(process.cwd(), indent_path, csvFileName);
+                // fs.writeFileSync(uploadPath, newCSV);
             }
-
-            let param = new FormData();
-            const fileStream = fs.createReadStream(newPath);
-            param.append('file', fileStream);
-            param.append('filename', filename);
-
-            const url = new URL(conf.atms_server_url);
-            const host = url.hostname;
-            const port = url.port;
-            const config = {
-                headers: { "Content-Type": "multipart/form-data;" },
-                proxy: {
-                    host: host,
-                    port: port
-                }
-            };
-            axios.post('/upload/indent', param, config).then(function (result) {
-                if (result.data.code == 1) {
+            SendCSVFileToNGTS(uploadPath, function (result) {
+                if (result.code == 1) {
+                    deleteFile(newPath)
+                    deleteFile(uploadPath)
                     return Response.success(res, true);
-                } else if (result.data.code == 0) {
-                    return Response.error(res, result.data.msg);
+                } else if (result.code == 0) {
+                    return Response.error(res, result.msg);
                 }
-            }).catch(function (error) {
-                log.error(error);
-                return Response.error(res, error.message);
-            });
+            })
 
-            // return Response.success(res, true);
         } catch (err) {
             log.error(err);
-            return Response.error(res, err.message);
+            return Response.error(res, "Upload Failed.");
         }
     });
 
     form.on('error', function (err) {
         log.error(err);
-        return Response.error(res, err.message);
+        return Response.error(res, "Upload Failed.");
+    });
+}
+
+
+const SendCSVFileToNGTS = function (filepath, callback) {
+    let param = new FormData();
+    const fileStream = fs.createReadStream(filepath);
+    const filename = path.basename(filepath)
+    param.append('file', fileStream);
+    param.append('filename', filename);
+
+    const url = new URL(conf.atms_server_url);
+    const host = url.hostname;
+    const port = url.port;
+    const config = {
+        headers: { "Content-Type": "multipart/form-data;" },
+        proxy: {
+            host: host,
+            port: port
+        }
+    };
+    axios.post('/upload/indent', param, config).then(function (result) {
+        callback({
+            code: result.data.code,
+            msg: result.data.msg
+        })
+    }).catch(function (error) {
+        log.error(error);
+        callback({
+            code: 0,
+            msg: 'Upload Failed.'
+        })
+    });
+}
+
+const GetMobiusUnit = async function () {
+    let result = await sequelizeDriverObj.query(
+        `SELECT
+            id, unit, \`group\`, subUnit
+        FROM unit`,
+        {
+            type: QueryTypes.SELECT,
+        }
+    );
+    return result
+}
+
+const GetNGTSVehicle = async function () {
+    let result = await sequelizeObj.query(
+        `SELECT * FROM ngts_vehicle where \`group\` = 'M' and serviceMode = 'Disposal'`,
+        {
+            type: QueryTypes.SELECT,
+        }
+    );
+    return result
+}
+
+function letterToNumber(str) {
+    let newStr = ""
+    for (let letter of str) {
+        if (/^[A-Za-z]$/.test(letter)) {
+            const upperCaseLetter = letter.toUpperCase();
+            const number = upperCaseLetter.charCodeAt(0) - 'A'.charCodeAt(0) + 1;
+            newStr += number.toString()
+        } else {
+            newStr += letter
+        }
+    }
+
+    return newStr;
+}
+
+function deleteFile(filePath) {
+    fs.unlink(filePath, (err) => {
+        if (err) {
+            log.error(err)
+        }
     });
 }

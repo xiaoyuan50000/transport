@@ -196,13 +196,13 @@ const QueryAndFilterJobList = async function (reqParams) {
             where 1=1 and a.loaTagId is null and f.purposeType != 'Urgent'`
     }
     let allField = `SELECT
-    b.id as taskId,  a.pocCheckStatus,
+    b.id as taskId,  a.pocCheckStatus, a.unitOwnFund,
     e.\`name\` as tsp, a.tripNo, b.tripId, a.\`status\` as tripStatus,b.notifiedTime, b.tspChangeTime,b.notifiedTime, b.cancellationTime,
     a.vehicleType, b.externalTaskId, b.externalJobId, b.requestId, b.taskStatus, b.startDate, b.endDate, b.mobileStartTime,
     b.arrivalTime, b.departTime, b.endTime, b.copyFrom, b.duration, b.executionDate, b.executionTime,
     b.poc, b.pocNumber, a.serviceModeId, sm.name as serviceModeName, sm.value as serviceMode, a.pickupDestination, a.dropoffDestination, a.driver as hasDriver,
     b.serviceProviderId, b.contractPartNo,
-    a.driver, a.serviceTypeId,st.category, st.disableWallet, a.repeats, a.instanceId, f.groupId,g.groupName, b.endorse, b.noMoreArbitrate, 
+    a.driver, a.serviceTypeId,st.category, st.disableWallet, st.name as resourceType, a.repeats, a.instanceId, f.groupId,g.groupName, b.endorse, b.noMoreArbitrate, 
     IFNULL(pst.isMandatory,0) as isMandatory, b.poNumber, ms.id AS messageId, b.funding, b.mobiusUnit, b.walletId, w.walletName `
 
     let countField = `SELECT count(*) as countNum `
@@ -349,7 +349,9 @@ module.exports.GetAllJobs = async function (req, res) {
 
     for (let temp of jobs) {
         if (temp.category.toUpperCase() != 'MV') {
-            temp.fundingSelect = [{ name: 'Central' }, { name: 'Unit' }]
+            if (!temp.resourceType.toLowerCase().startsWith('bus')) {
+                temp.fundingSelect = [{ name: 'Central' }, { name: 'Unit' }]
+            }
             // wallet
             temp.walletSelect = await getWalletSelect(temp, user)
 

@@ -351,11 +351,15 @@ const DoCreateTrip = async function (indent, serviceProviderId, pickupDestinatio
     let createTaskList = await GetCreateTasks(noOfVehicle, noOfDriver, pickupDestination, pickupNotes, dropoffDestination, dropoffNotes,
         executionDate, executionTime, duration, indent, tripId, pocName, contactNumber, typeOfVehicle, user, serviceModeVal, serviceModeId, serviceTypeId, tripNo, startDate, endDate, unitOwnFund)
 
+    let serviceTypeObj = await ServiceType.findByPk(serviceTypeId)
     let funding = await getfunding(indent.purposeType, serviceTypeId)
     createTaskList.forEach(val => {
         val.funding = funding
         if (unitOwnFund) {
             val.serviceProviderId = wogTSP
+            val.funding = "Unit"
+        } else if (serviceTypeObj.name.toLowerCase().startsWith('bus') && !unitOwnFund) {
+            val.funding = "Central"
         }
     })
 
@@ -961,7 +965,7 @@ module.exports.EditTrip = async function (req, res) {
                 contactNumber, executionDate, executionTime, duration, createdBy, serviceProviderId, remark, roleName,
                 periodStartDate, periodEndDate, driver, user, tripRemarks, serviceMode, serviceType, repeats,
                 requestId, instanceId, createdAt, isImport, tripNo, reEdit, indent, true, oldTripId, [], serviceModeVal,
-                startsOn, endsOn, repeatsOn, jobHistoryId, preParkDate, trip, unitOwnFund, wogTSP)
+                startsOn, endsOn, repeatsOn, jobHistoryId, preParkDate, trip, unitOwnFund, wogTSP, serviceTypeObj)
             await UpdateOrCancelJobTask(taskList, alreadySendDataTasks, typeOfVehicle, serviceMode, createdBy, tripNo, unitOwnFund)
         } else {
             let periodExecutionStartDate = moment(periodStartDate).format(fmt)
@@ -970,7 +974,7 @@ module.exports.EditTrip = async function (req, res) {
                 contactNumber, periodExecutionStartDate, periodExecutionStartTime, null, createdBy, serviceProviderId, remark, roleName,
                 periodStartDate, periodEndDate, driver, user, tripRemarks, serviceMode, serviceType, repeats,
                 requestId, instanceId, createdAt, isImport, tripNo, reEdit, indent, true, oldTripId, [], serviceModeVal,
-                startsOn, endsOn, repeatsOn, jobHistoryId, preParkDate, trip, unitOwnFund, wogTSP)
+                startsOn, endsOn, repeatsOn, jobHistoryId, preParkDate, trip, unitOwnFund, wogTSP, serviceTypeObj)
 
             let taskList2 = []
             if (preParkDate) {
@@ -983,7 +987,7 @@ module.exports.EditTrip = async function (req, res) {
                     contactNumber, periodExecutionEndDate, periodExecutionEndTime, null, createdBy, serviceProviderId, remark, roleName,
                     periodStartDate, periodEndDate, driver, user, tripRemarks, serviceMode, serviceType, repeats,
                     requestId, null, createdAt, isImport, tripNo, reEdit, indent, false, null, oldOperationHistorys, serviceModeVal,
-                    startsOn, endsOn, repeatsOn, jobHistoryId, preParkDate, trip, unitOwnFund, wogTSP)
+                    startsOn, endsOn, repeatsOn, jobHistoryId, preParkDate, trip, unitOwnFund, wogTSP, serviceTypeObj)
             }
             let taskList = taskList1.concat(taskList2)
             await UpdateOrCancelJobTask(taskList, alreadySendDataTasks, typeOfVehicle, serviceMode, createdBy, tripNo, unitOwnFund)
@@ -1143,7 +1147,7 @@ const BeforeEditTrip = async function (trip, roleName, serviceType, createdBy) {
     // Restore pending
     if (taskIdArray.length > 0) {
         await contractService.ContractBalanceAction.resetPendingBalance(taskIdArray)
-    
+
         await InitialPurchaseOrder.destroy({
             where: {
                 taskId: {
@@ -1305,7 +1309,7 @@ const DoEditTrip = async function (pickupDestination, pickupNotes, dropoffDestin
     contactNumber, executionDate, executionTime, duration, createdBy, serviceProviderId, remark, roleName,
     periodStartDate, periodEndDate, driver, user, tripRemarks, serviceModeId, serviceTypeId, repeats,
     requestId, instanceId, createdAt, isImport, tripNo, reEdit, indent, isCreateWorkFlow, oldTripId, oldOperationHistorys, serviceModeVal,
-    startsOn, endsOn, repeatsOn, jobHistoryId, preParkDate, trip, unitOwnFund, wogTSP) {
+    startsOn, endsOn, repeatsOn, jobHistoryId, preParkDate, trip, unitOwnFund, wogTSP, serviceTypeObj) {
 
     // ack
     let pickupDestinationId, dropoffDestinationId, resourceId = null
@@ -1379,6 +1383,9 @@ const DoEditTrip = async function (pickupDestination, pickupNotes, dropoffDestin
         val.funding = funding
         if (unitOwnFund) {
             val.serviceProviderId = wogTSP
+            val.funding = "Unit"
+        } else if (serviceTypeObj.name.toLowerCase().startsWith('bus') && !unitOwnFund) {
+            val.funding = "Central"
         }
     })
 
