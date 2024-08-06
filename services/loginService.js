@@ -31,6 +31,9 @@ const checkLoginUser = async function (loginName, password) {
 
     if (user != null) {
         let role = await Role.findByPk(user.role)
+        if (!role) {
+            return { user, loginError: "Login Failed. Invalid Role." }
+        }
         if (role.roleName == "POC") {
             return { user, loginError: "Login Failed. POC user cannot login." }
         }
@@ -271,6 +274,9 @@ module.exports.loginUseSingpass = async function (req, res) {
         }
     }
     let role = await Role.findByPk(user.role)
+    if (!role) {
+        return Response.error(res, "Login Failed. Invalid Role.");
+    }
     if (role.roleName == "POC") {
         return Response.error(res, "Login Failed. POC user cannot login.");
     }
@@ -320,6 +326,9 @@ const LoginByMobiusServer = async function (req, res, next) {
         return res.render('login', { title: 'Login', error: "Login Failed. User does not exist." })
     }
     let role = await Role.findByPk(user.role)
+    if (!role) {
+        return res.render('login', { title: 'Login', error: "Login Failed. Invalid Role." })
+    }
     if (role.roleName == "POC") {
         return res.render('login', { title: 'Login', error: "Login Failed. POC user cannot login." })
     }

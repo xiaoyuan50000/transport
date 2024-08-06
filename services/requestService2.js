@@ -2049,7 +2049,7 @@ const SendNotificationAndDelTask = async function (taskIds, type) {
                 await DeleteMobiusTaskByTaskIdArray(taskIds)
             } else if (type == "cancel") {
                 await Utils.SendDataToFirebase(taskList, 'Task cancel!')
-                // await UpdateMobiusTaskByTaskIdArray(taskIds)
+                await UpdateMobiusTaskByTaskIdArray(taskIds)
             }
         }
     }

@@ -212,7 +212,7 @@ const GetInvoiceByMonthly = async function (serviceProviderId, noOfMonth, start,
                 AND COALESCE(SUBSTRING_INDEX(b.contractPartNo, ',', 1), null) 
                         in (SELECT b.contractPartNo FROM contract a
                         INNER JOIN contract_detail b ON a.contractNo = b.contractNo
-                        WHERE a.poType != 'monthly')
+                        WHERE a.poType = 'monthly')
                 ${filter}
                 GROUP BY
                 b.serviceProviderId, monthly`
