@@ -1013,7 +1013,7 @@ module.exports.uploadJobFile = async function (req, res) {
                     }
 
                     let purposeObj = purposeModeList.find(o => o.name == purpose)
-                    let purposeNGTSId = purposeObj ? purposeObj.id : 0
+                    let purposeNGTSId = purposeObj ? purposeObj.ngtsId : 0
 
                     let startDateTime = moment(`${startDate} ${startTime}`, "DDMMYYYY HH:mm").format("YYYYMMDDHHmmss")
                     let endDateTime = moment(`${endDate} ${endTime}`, "DDMMYYYY HH:mm").format("YYYYMMDDHHmmss")

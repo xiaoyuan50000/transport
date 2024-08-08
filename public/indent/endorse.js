@@ -297,7 +297,7 @@ $(function () {
                         Review2: `<button class="btn btn-sm me-1" title="Review" onclick="showReviewDialog(this)" data-row="${meta.row}"><img src="../images/indent/action/comment2.svg"></button>`,
                     }
                     let btn = action["View"]
-                    console.log(`tripNo: ${tripNo}, noMoreArbitrate: ${full.noMoreArbitrate}, endorse: ${full.endorse}, taskStatus: ${full.taskStatus}, role: ${roleName}`)
+                    // console.log(`tripNo: ${tripNo}, noMoreArbitrate: ${full.noMoreArbitrate}, endorse: ${full.endorse}, taskStatus: ${full.taskStatus}, role: ${roleName}`)
 
                     if (haveArbitrateBtn(full)) {
                         btn += action["Arbitrate"]

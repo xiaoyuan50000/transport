@@ -86,119 +86,50 @@ module.exports.InitTable = async function (req, res) {
         }
     }
 
-
     if (userRole == ROLE.TSP) {
-        filter += ` and FIND_IN_SET(b.serviceProviderId, ?)`
-        pageReplacements.push(userServiceProviderId)
+        filter += ` and b.serviceProviderId in (?)`
+        pageReplacements.push(userServiceProviderId ? userServiceProviderId.split(',').map(item => parseInt(item, 10)) : [0])
     } else if (userRole == ROLE.RQ || userRole == ROLE.UCO) {
         filter += ` and b.funding = 'Unit' and e.groupId = ?`
         pageReplacements.push(userGroup)
     } else if (userRole == ROLE.RF || ROLE.OCC.indexOf(userRole) != -1) {
-        filter += ` and FIND_IN_SET(d.serviceTypeId, ?)`
-        pageReplacements.push(userServiceTypeId)
+        filter += ` and d.serviceTypeId in (?)`
+        pageReplacements.push(userServiceTypeId ? userServiceTypeId.split(',').map(item => parseInt(item, 10)) : [0])
     } else {
         throw `User ${user.loginName} has no role.`
     }
 
-    // let sql = `SELECT
-    //                 b.requestId,
-    //                 c.\`name\`,
-    //                 b.poNumber,
-    //                 SUM(a.total) AS amounts,
-    //                 count(DISTINCT a.taskId) AS noOfTrips,
-    //                 GROUP_CONCAT(DISTINCT taskId) as taskIds,
-    //                 c.id
-    //             FROM
-    //                 initial_purchase_order a
-    //             LEFT JOIN job_task b ON a.taskId = b.id
-    //             LEFT JOIN service_provider c ON b.serviceProviderId = c.id
-    //             LEFT JOIN job d on b.tripId = d.id
-    //             LEFT JOIN request e on b.requestId = e.id
-    //             LEFT JOIN contract_detail g on g.contractPartNo = a.contractPartNo
-    //             LEFT JOIN contract h on g.contractNo = h.contractNo
-    //             WHERE d.preParkDate is null ${filter}
-    //             and h.poType != 'monthly'
-    //             GROUP BY
-    //                 b.requestId,
-    //                 b.serviceProviderId`
-    // let sql = `SELECT
-    //                     b.requestId,
-    //                     c.\`name\`,
-    //                     b.poNumber,
-    //                     SUM(ifnull(a.total,0)) AS amounts,
-    //                     count(DISTINCT b.id) AS noOfTrips,
-    //                     GROUP_CONCAT(DISTINCT b.id) as taskIds,
-    //                     c.id,
-    //                     count(DISTINCT a.taskId) as noOfGeneratedTrips,
-    //                     max(a.generatedTime) as generatedTime
-    //             FROM
-    //                 job_task b
-    //             LEFT JOIN initial_purchase_order a ON a.taskId = b.id
-    //             LEFT JOIN service_provider c ON b.serviceProviderId = c.id
-    //             LEFT JOIN job d on b.tripId = d.id
-    //             LEFT JOIN request e on b.requestId = e.id
-    //             LEFT JOIN contract_detail g on g.contractPartNo = b.contractPartNo
-    //             LEFT JOIN contract h on g.contractNo = h.contractNo
-    //             LEFT JOIN service_type s on d.serviceTypeId = s.id
-    //             WHERE s.category != 'MV'
-    //             ${filter}
-    //             and h.poType != 'monthly'
-    //             GROUP BY
-    //                 b.requestId,
-    //                 b.serviceProviderId`
-    // let contractPartNoList = await sequelizeObj.query(
-    //     `SELECT b.contractPartNo FROM
-    //     contract a
-    // LEFT JOIN contract_detail b ON a.contractNo = b.contractNo
-    // WHERE
-    //     a.poType != 'monthly' AND b.contractPartNo IS NOT NULL`,
-    //     {
-    //         type: QueryTypes.SELECT,
-    //     }
-    // );
-    // let contractPartNoStr = "," + contractPartNoList.map(a => a.contractPartNo).join(",|,") + ","
-    // let sql = `SELECT
-    //                 b.requestId,
-    //                 b.poNumber,
-    //                 count(DISTINCT b.id) AS noOfTrips,
-    //                 GROUP_CONCAT(DISTINCT b.id) AS taskIds,
-    //                 b.serviceProviderId as id
-    //             FROM
-    //                 job_task b
-    //             LEFT JOIN job d ON b.tripId = d.id
-    //             LEFT JOIN request e ON b.requestId = e.id
-    //             WHERE
-    //                 b.serviceProviderId IS NOT NULL
-    //                 AND CONCAT(',',REPLACE(b.contractPartNo,',',',|,'),',') REGEXP '${contractPartNoStr}'
-    //                 and COALESCE(SUBSTRING_INDEX(b.contractPartNo, ',', 1), null) in (SELECT b.contractPartNo FROM
-    //     contract a
-    // LEFT JOIN contract_detail b ON a.contractNo = b.contractNo
-    // WHERE
-    //     a.poType != 'monthly' AND b.contractPartNo IS NOT NULL)
-    //                 ${filter}
-    //             GROUP BY
-    //                 b.requestId,
-    //                 b.serviceProviderId`
     let sql = `SELECT
                     b.requestId,
                     b.poNumber,
-                    count(DISTINCT b.id) AS noOfTrips,
+                    COUNT(DISTINCT b.id) AS noOfTrips,
                     GROUP_CONCAT(DISTINCT b.id) AS taskIds,
                     b.serviceProviderId as id
                 FROM
-                    job_task b
+                    job_task b 
+                INNER JOIN contract a on a.serviceProviderId = b.serviceProviderId and a.poType != 'monthly'
                 LEFT JOIN job d ON b.tripId = d.id
-                LEFT JOIN request e ON b.requestId = e.id
-                WHERE
-                    b.serviceProviderId IS NOT NULL
-                    AND COALESCE(SUBSTRING_INDEX(b.contractPartNo, ',', 1), null) 
-                        in (SELECT b.contractPartNo FROM contract a
-                        INNER JOIN contract_detail b ON a.contractNo = b.contractNo
-                        WHERE a.poType != 'monthly')
-                    ${filter}
+                LEFT JOIN request e on b.requestId = e.id
+                WHERE 1=1 ${filter}
                 GROUP BY
                     b.requestId,
                     b.serviceProviderId`
+    let sqlCount = `select 
+                        count(*) as total 
+                    from (
+                        SELECT
+                            b.requestId,
+                            b.serviceProviderId
+                        FROM
+                            job_task b
+                        LEFT JOIN job d ON b.tripId = d.id
+                        INNER JOIN contract a ON a.serviceProviderId = b.serviceProviderId AND a.poType != 'monthly'
+                        WHERE 1=1 ${filter}
+                        GROUP BY
+                            b.requestId,
+                            b.serviceProviderId
+                    ) a`
+    
     let pageResult = await sequelizeObj.query(
         sql + " limit ?,?",
         {
@@ -208,13 +139,13 @@ module.exports.InitTable = async function (req, res) {
     );
 
     let countResult = await sequelizeObj.query(
-        sql,
+        sqlCount,
         {
             replacements: pageReplacements,
             type: QueryTypes.SELECT,
         }
     );
-    let totalRecord = countResult.length
+    let totalRecord = countResult[0].total
     // pageResult = await GetInitialTableDetails(pageResult, 0)
     pageResult = await GetInitialPOTableDetails(pageResult)
 
