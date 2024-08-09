@@ -172,34 +172,60 @@ const queryDashboardResult = function (filter, taskFilter, replacements, startId
             idFilter += ` and a.id < ${endId}`
         }
         let result = await sequelizeObj.query(
+            // `
+            // select 
+            // c.*, t.contractNo, t.name, s.name as tsp, s.lateTime, t.isLate,
+            // IFNULL(po.total, ipo.total) as total, 
+            // IFNULL(po.surchargeLessThen48, ipo.surchargeLessThen48) as surchargeLessThen48,
+            // IFNULL(po.surchargeGenterThen12, ipo.surchargeGenterThen12) as surchargeGenterThen12,
+            // IFNULL(po.surchargeLessThen12, ipo.surchargeLessThen12) as surchargeLessThen12,
+            // IFNULL(po.surchargeLessThen4, ipo.surchargeLessThen4) as surchargeLessThen4,
+            // IFNULL(po.surchargeDepart, ipo.surchargeDepart) as surchargeDepart,
+            // IFNULL(po.transCostSurchargeLessThen4, ipo.transCostSurchargeLessThen4) as transCostSurchargeLessThen4
+            // from (
+            //     select 
+            //         a.id, a.tripId, a.requestId, a.taskStatus, a.executionDate, a.executionTime, SUBSTRING_INDEX(a.contractPartNo, ',', 1) as contractPartNo, a.tspChangeTime, a.notifiedTime, a.cancellationTime, a.serviceProviderId, a.walletId, a.endorse,
+            //         b.serviceTypeId, c.groupId, c.purposeType, b.serviceModeId
+            //     from request c 
+            //     LEFT JOIN job b on c.id = b.requestId
+            //     LEFT JOIN job_task a on b.id = a.tripId
+            //     where 
+            //     a.serviceProviderId is not null and
+            //     b.approve = 1 ${idFilter} ${filter} ${taskFilter} 
+            // ) c LEFT JOIN initial_purchase_order ipo on c.id = ipo.taskId
+            // LEFT JOIN purchase_order po on c.id = po.taskId
+            // LEFT JOIN (
+            //         select a.contractNo, a.name, c.contractPartNo, c.isLate from contract a
+            //         LEFT JOIN contract_detail b on a.contractNo = b.contractNo
+            //         LEFT JOIN contract_rate c on b.contractPartNo = c.contractPartNo
+            //     ) t on t.contractPartNo = c.contractPartNo
+            // LEFT JOIN service_provider s on c.serviceProviderId = s.id
+            // `,
             `
-            select 
-            c.*, t.contractNo, t.name, s.name as tsp, s.lateTime, t.isLate,
-            IFNULL(po.total, ipo.total) as total, 
-            IFNULL(po.surchargeLessThen48, ipo.surchargeLessThen48) as surchargeLessThen48,
-            IFNULL(po.surchargeGenterThen12, ipo.surchargeGenterThen12) as surchargeGenterThen12,
-            IFNULL(po.surchargeLessThen12, ipo.surchargeLessThen12) as surchargeLessThen12,
-            IFNULL(po.surchargeLessThen4, ipo.surchargeLessThen4) as surchargeLessThen4,
-            IFNULL(po.surchargeDepart, ipo.surchargeDepart) as surchargeDepart,
-            IFNULL(po.transCostSurchargeLessThen4, ipo.transCostSurchargeLessThen4) as transCostSurchargeLessThen4
-            from (
-                select 
-                    a.id, a.tripId, a.requestId, a.taskStatus, a.executionDate, a.executionTime, SUBSTRING_INDEX(a.contractPartNo, ',', 1) as contractPartNo, a.tspChangeTime, a.notifiedTime, a.cancellationTime, a.serviceProviderId, a.walletId, a.endorse,
-                    b.serviceTypeId, c.groupId, c.purposeType, b.serviceModeId
-                from request c 
-                LEFT JOIN job b on c.id = b.requestId
-                LEFT JOIN job_task a on b.id = a.tripId
-                where 
-                a.serviceProviderId is not null and
-                b.approve = 1 ${idFilter} ${filter} ${taskFilter} 
-            ) c LEFT JOIN initial_purchase_order ipo on c.id = ipo.taskId
-            LEFT JOIN purchase_order po on c.id = po.taskId
-            LEFT JOIN (
-                    select a.contractNo, a.name, c.contractPartNo, c.isLate from contract a
-                    LEFT JOIN contract_detail b on a.contractNo = b.contractNo
-                    LEFT JOIN contract_rate c on b.contractPartNo = c.contractPartNo
-                ) t on t.contractPartNo = c.contractPartNo
-            LEFT JOIN service_provider s on c.serviceProviderId = s.id
+            select
+                a.id, a.tripId, a.requestId, a.taskStatus, a.executionDate, a.executionTime, 
+                SUBSTRING_INDEX(a.contractPartNo, ',', 1) as contractPartNo, a.tspChangeTime, a.notifiedTime, a.cancellationTime, 
+                a.serviceProviderId, a.walletId, a.endorse,
+                b.serviceTypeId, c.groupId, c.purposeType, b.serviceModeId, s.name as tsp, s.lateTime,
+                ct.contractNo, ct.name, cr.isLate,
+                IFNULL(po.total, ipo.total) as total,
+                IFNULL(po.surchargeLessThen48, ipo.surchargeLessThen48) as surchargeLessThen48,
+                IFNULL(po.surchargeGenterThen12, ipo.surchargeGenterThen12) as surchargeGenterThen12,
+                IFNULL(po.surchargeLessThen12, ipo.surchargeLessThen12) as surchargeLessThen12,
+                IFNULL(po.surchargeLessThen4, ipo.surchargeLessThen4) as surchargeLessThen4,
+                IFNULL(po.surchargeDepart, ipo.surchargeDepart) as surchargeDepart,
+                IFNULL(po.transCostSurchargeLessThen4, ipo.transCostSurchargeLessThen4) as transCostSurchargeLessThen4
+            from 
+                job_task a 
+            INNER JOIN service_provider s on a.serviceProviderId = s.id
+            INNER JOIN job b on a.tripId = b.id and b.approve = 1
+            LEFT JOIN	request c on a.requestId = c.id
+            LEFT JOIN initial_purchase_order ipo on a.id = ipo.taskId
+            LEFT JOIN purchase_order po on a.id = po.taskId
+            LEFT JOIN contract_rate cr on a.contractPartNo = cr.contractPartNo
+            LEFT JOIN contract_detail cd on cr.contractPartNo = cd.contractPartNo
+            LEFT JOIN contract ct on ct.contractNo = cd.contractNo
+            where 1=1 ${idFilter} ${filter} ${taskFilter} 
             `,
             {
                 replacements: replacements,

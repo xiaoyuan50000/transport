@@ -94,105 +94,13 @@ const GetInvoiceByMonthly = async function (serviceProviderId, noOfMonth, start,
     }
 
     if (userRole == ROLE.TSP) {
-        filter += " and FIND_IN_SET(b.serviceProviderId, ?)"
-        pageReplacements.push(userServiceProviderId)
+        filter += " and b.serviceProviderId in (?)"
+        pageReplacements.push(userServiceProviderId ? userServiceProviderId.split(',').map(item => parseInt(item, 10)) : [0])
     } else if (userRole == ROLE.RF) {
-        filter += " and FIND_IN_SET(f.serviceTypeId, ?)"
-        pageReplacements.push(userServiceTypeId)
+        filter += ` and f.serviceTypeId in (?)`
+        pageReplacements.push(userServiceTypeId ? userServiceTypeId.split(',').map(item => parseInt(item, 10)) : [0])
     }
 
-    // let sql = `SELECT
-    //             c.id,
-    //             c.\`name\`,
-    //             DATE_FORMAT(b.executionDate, '%Y-%m') monthly,
-    //             DATE_FORMAT(b.executionDate, '%m') noOfMonth,
-    //             '' AS requestId,
-    //             GROUP_CONCAT(a.taskId) as taskIds,
-    //             e.poType,
-    //             b.poNumber,
-    //             SUM(a.total) AS amounts,
-    //             count(a.taskId) AS noOfTrips,
-    //             f.serviceTypeId,
-    //             0 as iamounts
-    //         FROM
-    //             purchase_order a
-    //         LEFT JOIN job_task b ON a.taskId = b.id
-    //         LEFT JOIN service_provider c ON b.serviceProviderId = c.id
-    //         LEFT JOIN contract_detail d ON a.contractPartNo = d.contractPartNo
-    //         LEFT JOIN contract e ON e.contractNo = d.contractNo
-    //         LEFT JOIN job f on b.tripId = f.id
-    //         WHERE
-    //             b.endorse = 1
-    //         AND b.taskStatus != 'declined'
-    //         AND FIND_IN_SET('monthly', e.poType)
-    //         ${filter}
-    //         GROUP BY
-    //             b.serviceProviderId, monthly`;
-    // let sql = `SELECT
-    //                 c.id,
-    //                 c.\`name\`,
-    //                 DATE_FORMAT(b.executionDate, '%Y-%m') monthly,
-    //                 DATE_FORMAT(b.executionDate, '%m') noOfMonth,
-    //                 '' AS requestId,
-    //                 GROUP_CONCAT(b.id) as taskIds,
-    //                 e.poType,
-    //                 b.poNumber,
-    //                 SUM(ifnull(a.total,0)) AS amounts,
-    //                 count(a.taskId) AS noOfGeneratedTrips,
-    //                 count(b.id) AS noOfTrips,
-    //                 f.serviceTypeId,
-    //                 0 as iamounts,
-    //                 max(a.generatedTime) AS generatedTime
-    //             FROM
-    //                                 job_task b
-    //             LEFT JOIN purchase_order a ON b.id = a.taskId
-    //             LEFT JOIN service_provider c ON b.serviceProviderId = c.id
-    //             LEFT JOIN contract_detail d ON b.contractPartNo = d.contractPartNo
-    //             LEFT JOIN contract e ON e.contractNo = d.contractNo
-    //             LEFT JOIN job f on b.tripId = f.id
-    //             LEFT JOIN service_type s on f.serviceTypeId = s.id
-    //             WHERE
-    //                 b.endorse = 1 
-    //             AND s.category != 'MV'
-    //             AND b.taskStatus != 'declined'
-    //             AND FIND_IN_SET('monthly', e.poType)
-    //             ${filter}
-    //             GROUP BY
-    //                 b.serviceProviderId, monthly`
-    // let contractPartNoList = await sequelizeObj.query(
-    //     `SELECT
-    //     b.contractPartNo
-    // FROM
-    //     contract a
-    // LEFT JOIN contract_detail b ON a.contractNo = b.contractNo
-    // WHERE
-    //     FIND_IN_SET('monthly', a.poType)
-    // AND b.contractPartNo IS NOT NULL`,
-    //     {
-    //         type: QueryTypes.SELECT,
-    //     }
-    // );
-    // let contractPartNoStr = "," + contractPartNoList.map(a => a.contractPartNo).join(",|,") + ","
-    // let sql = `SELECT
-    //                 b.serviceProviderId as id,
-    //                 DATE_FORMAT(b.executionDate, '%Y-%m') monthly,
-    //                 DATE_FORMAT(b.executionDate, '%m') noOfMonth,
-    //                 '' AS requestId,
-    //                 GROUP_CONCAT(b.id) as taskIds,
-    //                 b.poNumber,
-    //                 count(b.id) AS noOfTrips,
-    //                 0 as iamounts
-    //             FROM
-    //                 job_task b
-    //             LEFT JOIN job f ON b.tripId = f.id
-    //             WHERE
-    //             b.endorse = 1
-    //             AND b.taskStatus != 'declined'
-    //             AND b.serviceProviderId is not null
-    //             AND CONCAT(',',REPLACE(b.contractPartNo,',',',|,'),',') REGEXP '${contractPartNoStr}'
-    //             ${filter}
-    //             GROUP BY
-    //             b.serviceProviderId, monthly`
     let sql = `SELECT
                     b.serviceProviderId as id,
                     DATE_FORMAT(b.executionDate, '%Y-%m') monthly,
@@ -204,18 +112,28 @@ const GetInvoiceByMonthly = async function (serviceProviderId, noOfMonth, start,
                     0 as iamounts
                 FROM
                     job_task b
+                INNER JOIN contract a on b.serviceProviderId = a.serviceProviderId and FIND_IN_SET('monthly', a.poType)
                 LEFT JOIN job f ON b.tripId = f.id
                 WHERE
                 b.endorse = 1
                 AND b.taskStatus != 'declined'
-                AND b.serviceProviderId is not null
-                AND COALESCE(SUBSTRING_INDEX(b.contractPartNo, ',', 1), null) 
-                        in (SELECT b.contractPartNo FROM contract a
-                        INNER JOIN contract_detail b ON a.contractNo = b.contractNo
-                        WHERE a.poType = 'monthly')
                 ${filter}
                 GROUP BY
                 b.serviceProviderId, monthly`
+    let sqlCount = `select count(*) as total from (
+                        SELECT
+                                b.serviceProviderId as id,
+                                DATE_FORMAT(b.executionDate, '%Y-%m') monthly
+                        FROM
+                                job_task b
+                        INNER JOIN contract a on b.serviceProviderId = a.serviceProviderId and FIND_IN_SET('monthly', a.poType)
+                        LEFT JOIN job f ON b.tripId = f.id
+                        WHERE
+                        b.endorse = 1
+                        AND b.taskStatus != 'declined'
+                        ${filter}
+                        GROUP BY
+                        b.serviceProviderId, monthly) a`
 
     let pageResult = await sequelizeObj.query(
         sql + " limit ?,?",
@@ -226,13 +144,13 @@ const GetInvoiceByMonthly = async function (serviceProviderId, noOfMonth, start,
     );
 
     let countResult = await sequelizeObj.query(
-        sql,
+        sqlCount,
         {
             replacements: pageReplacements,
             type: QueryTypes.SELECT,
         }
     );
-    let totalRecord = countResult.length
+    let totalRecord = countResult[0].total
 
     // pageResult = await initialPoService.GetInitialTableDetails(pageResult, 1, 1)
     pageResult = await GetPOTableDetails(pageResult, 1)
@@ -401,11 +319,11 @@ const GetInvoiceByIndent = async function (serviceProviderId, indentId, start, l
     }
 
     if (userRole == ROLE.TSP) {
-        filter += " and FIND_IN_SET(b.serviceProviderId, ?)"
-        pageReplacements.push(userServiceProviderId)
+        filter += " and b.serviceProviderId in (?)"
+        pageReplacements.push(userServiceProviderId ? userServiceProviderId.split(',').map(item => parseInt(item, 10)) : [0])
     } else if (userRole == ROLE.RF) {
-        filter += " and FIND_IN_SET(f.serviceTypeId, ?)"
-        pageReplacements.push(userServiceTypeId)
+        filter += ` and f.serviceTypeId in (?)`
+        pageReplacements.push(userServiceTypeId ? userServiceTypeId.split(',').map(item => parseInt(item, 10)) : [0])
     }
 
     // let sql = `SELECT
@@ -466,20 +384,20 @@ const GetInvoiceByIndent = async function (serviceProviderId, indentId, start, l
     //         ${filter}
     //         GROUP BY
     //             b.serviceProviderId, b.requestId`
-    let contractPartNoList = await sequelizeObj.query(
-        `SELECT
-        b.contractPartNo
-    FROM
-        contract a
-    LEFT JOIN contract_detail b ON a.contractNo = b.contractNo
-    WHERE
-        FIND_IN_SET('indent', a.poType)
-    AND b.contractPartNo IS NOT NULL`,
-        {
-            type: QueryTypes.SELECT,
-        }
-    );
-    let contractPartNoStr = "," + contractPartNoList.map(a => a.contractPartNo).join(",|,") + ","
+    // let contractPartNoList = await sequelizeObj.query(
+    //     `SELECT
+    //     b.contractPartNo
+    // FROM
+    //     contract a
+    // LEFT JOIN contract_detail b ON a.contractNo = b.contractNo
+    // WHERE
+    //     FIND_IN_SET('indent', a.poType)
+    // AND b.contractPartNo IS NOT NULL`,
+    //     {
+    //         type: QueryTypes.SELECT,
+    //     }
+    // );
+    // let contractPartNoStr = "," + contractPartNoList.map(a => a.contractPartNo).join(",|,") + ","
     let sql = `SELECT
                     b.serviceProviderId as id,
                     '' as monthly,
@@ -490,15 +408,27 @@ const GetInvoiceByIndent = async function (serviceProviderId, indentId, start, l
                     0 as iamounts
                 FROM
                     job_task b
+                INNER JOIN contract a on b.serviceProviderId = a.serviceProviderId and FIND_IN_SET('indent', a.poType)
                 LEFT JOIN job f ON b.tripId = f.id
                 WHERE
                 b.endorse = 1
                 AND b.taskStatus != 'declined'
-                AND b.serviceProviderId is not null
-                AND CONCAT(',',REPLACE(b.contractPartNo,',',',|,'),',') REGEXP '${contractPartNoStr}'
                 ${filter}
                 GROUP BY
-                b.serviceProviderId, b.requestId`
+                b.requestId, b.serviceProviderId`
+    let sqlCount = `select count(*) as total from (
+                        SELECT
+                            b.serviceProviderId, b.requestId
+                        FROM
+                            job_task b
+                        INNER JOIN contract a on b.serviceProviderId = a.serviceProviderId and FIND_IN_SET('indent', a.poType)
+                        LEFT JOIN job f ON b.tripId = f.id
+                        WHERE
+                        b.endorse = 1
+                        AND b.taskStatus != 'declined'
+                        ${filter}
+                        GROUP BY
+                        b.requestId, b.serviceProviderId) a`
 
     let pageResult = await sequelizeObj.query(
         sql + " limit ?,?",
@@ -509,13 +439,13 @@ const GetInvoiceByIndent = async function (serviceProviderId, indentId, start, l
     );
 
     let countResult = await sequelizeObj.query(
-        sql,
+        sqlCount,
         {
             replacements: pageReplacements,
             type: QueryTypes.SELECT,
         }
     );
-    let totalRecord = countResult.length
+    let totalRecord = countResult[0].total
 
     // pageResult = await initialPoService.GetInitialTableDetails(pageResult, 0, 1)
     pageResult = await GetPOTableDetails(pageResult, 0)

@@ -124,6 +124,7 @@ module.exports.InitTable = async function (req, res) {
                             job_task b
                         LEFT JOIN job d ON b.tripId = d.id
                         INNER JOIN contract a ON a.serviceProviderId = b.serviceProviderId AND a.poType != 'monthly'
+                        LEFT JOIN request e on b.requestId = e.id
                         WHERE 1=1 ${filter}
                         GROUP BY
                             b.requestId,

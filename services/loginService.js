@@ -123,7 +123,7 @@ const loginServer = async function (req, res) {
         // return Response.success(res, { ...return_user, expire: expireDate, isFirstLogin: user.lastChangePasswordDate == null, token: token });
     } catch (ex) {
         log.error(ex)
-        return Response.error(res, "Server error.");
+        return Response.error(res, "Login Failed.");
     }
 };
 module.exports.loginServer = loginServer;

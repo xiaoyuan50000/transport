@@ -183,8 +183,8 @@ const SetTripDatas = async function (tripId) {
     let trip = await GetTripById(tripId)
     isATMS = trip.referenceId !== undefined && trip.referenceId !== null;
     isCreatedByRQ = trip.isCreatedByRQ
-    pickupNotes = trip.pickupNotes
-    dropoffNotes = trip.dropoffNotes
+    pickupNotes = trip.pickupNotes || ""
+    dropoffNotes = trip.dropoffNotes || ""
     // console.log(trip)
     // let groupId = $UnitSelect.attr("data-id")
     let groupId = trip.groupId
@@ -1052,7 +1052,7 @@ const validIndentFieldLength = function (tripRemarks, pickupNotes, dropoffNotes,
         }
     }
 
-    if (contactNumber && contactNumber.length != 8 && ["8", "9"].indexOf(contactNumber.substring(0, 1)) == -1) {
+    if (contactNumber && !(contactNumber.length == 8 && ["8", "9"].indexOf(contactNumber.substring(0, 1)) != -1 && /^\d+$/.test(contactNumber))) {
         return {
             success: 0,
             message: 'Mobile Number must be 8 number and start with 8 or 9.'
@@ -1420,6 +1420,8 @@ const checkDriverNum = function () {
     if (parseInt(driverNum) > parseInt(noOfVehicle)) {
         $("#noOfDriver").val(noOfVehicle);
     }
+    $("#noOfDriver").val($("#noOfDriver").val().replace(/[Ee]/g, ''))
+
 }
 
 const checkPreparkNum = function () {
@@ -1431,6 +1433,7 @@ const checkPreparkNum = function () {
     if (parseInt(preParkQty) > parseInt(noOfVehicle)) {
         $("#preParkQty").val(noOfVehicle);
     }
+    $("#preParkQty").val($("#preParkQty").val().replace(/[Ee]/g, ''))
 }
 
 const getFuelFormData = function () {
@@ -1464,4 +1467,13 @@ const validFuelFormData = function (data) {
         }
     }
     return true
+}
+
+const CheckOnInput = function (e) {
+    e.value = e.value
+        .replace(/^0+/, '')
+        .replace(/^\./g, '')
+        .replace(/[^\d.]/g, '')
+        .replace(/\./g, '.')
+        .replace(/^(-)?(\d+)\.(\d\d).*$/, '$1$2');
 }

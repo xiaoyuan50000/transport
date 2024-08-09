@@ -67,7 +67,7 @@
                                 <div class="input-group">
                                     <span class="input-group-text">+65</span>
                                     <input type="text" class="form-control" name="mobileNumber" autocomplete="off"
-                                        onKeypress="return (/[\d]/.test(String.fromCharCode(event.keyCode)))">
+                                        onKeypress="return (/^\d+$/.test(String.fromCharCode(event.keyCode)))">
                                 </div>
                             </div>
                         </form>

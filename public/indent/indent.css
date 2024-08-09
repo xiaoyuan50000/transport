@@ -24,6 +24,14 @@ html {
     border-left: 1px solid #F3F3F3;
 }
 
+.fixed-table tr th:nth-last-child(1) {
+    border-top-right-radius: 15px;
+}
+
+.fixed-table tr th:nth-child(1) {
+    border-top-left-radius: 15px;
+}
+
 .auto-wrap {
     white-space: nowrap;
 }

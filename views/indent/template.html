@@ -31,7 +31,7 @@
                 <label class="mb-2">Duration</label>
                 <div class="input-group mb-2">
                     <input class="form-control" type="number" label="Duration"  min="1" name="duration" autocomplete="off" oninput="checkEditDriverFormInput(this)" 
-                        onKeypress="return (/[\d]/.test(String.fromCharCode(event.keyCode)))" id="edit-duration">
+                        onKeypress="return (/^\d+$/.test(String.fromCharCode(event.keyCode)))" onpaste="return false" id="edit-duration">
                     <span class="input-group-text">hr</span>
                     <div class="invalid-feedback mb-2">
                         Duration is mandatory.
@@ -97,27 +97,27 @@
     <div class="row w-100">
         <form class="mx-2" novalidate id="edit-TaskTime-form">
             <label class="mb-2">Arrive Time:</label>
-            <input class="form-control mb-2" type="text" label="Arrive Time"  name="arriveTime" autocomplete="off" id="arriveTime">
+            <input class="form-control mb-2" type="text" label="Arrive Time"  name="arriveTime" autocomplete="off" id="arriveTime" readonly>
 
             <div class="departTime-div" style="display: none;">
                 <label class="mb-2">Depart Time:</label>
-                <input class="form-control mb-2" type="text" label="Depart Time"  name="departTime" autocomplete="off" id="departTime">
+                <input class="form-control mb-2" type="text" label="Depart Time"  name="departTime" autocomplete="off" id="departTime" readonly>
             </div>
             
             <div class="endTime-div" style="display: none;">
                 <label class="mb-2">End Time:</label>
-                <input class="form-control mb-2" type="text" label="End Time"  name="endTime" autocomplete="off" id="endTime">
+                <input class="form-control mb-2" type="text" label="End Time"  name="endTime" autocomplete="off" id="endTime" readonly>
             </div>
 
             <div class="rf-time-div" style="display: none;">
                 <label class="mb-2">TSP Notified Time:</label>
-                <input class="form-control mb-2" type="text" label="TSP Notified Time"  name="tspNotifiedTime" autocomplete="off" id="tspNotifiedTime">
+                <input class="form-control mb-2" type="text" label="TSP Notified Time"  name="tspNotifiedTime" autocomplete="off" id="tspNotifiedTime" readonly>
 
                 <label class="mb-2">TSP Amendment Notified Time</label>
-                <input class="form-control mb-2" type="text" label="TSP Amendment Notified Time"  name="tspAmendmentNotifiedTime" autocomplete="off" id="tspAmendmentNotifiedTime">
+                <input class="form-control mb-2" type="text" label="TSP Amendment Notified Time"  name="tspAmendmentNotifiedTime" autocomplete="off" id="tspAmendmentNotifiedTime" readonly>
 
                 <label class="mb-2">TSP Cancellation Notified Time</label>
-                <input class="form-control mb-2" type="text" label="TSP Cancellation Notified Time"  name="tspCancellationNotifiedTime" autocomplete="off" id="tspCancellationNotifiedTime">
+                <input class="form-control mb-2" type="text" label="TSP Cancellation Notified Time"  name="tspCancellationNotifiedTime" autocomplete="off" id="tspCancellationNotifiedTime" readonly>
             </div>
         </form>
     </div>

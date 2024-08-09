@@ -216,7 +216,7 @@ let ChatUtil = function () {
 		initChatMessageHandler();
 	}
 	const initRoomChatModal = async function (userId, currentRole, serviceProviderId, taskId) {
-		console.log('initRoomChatModal => taskId: ', taskId);
+		// console.log('initRoomChatModal => taskId: ', taskId);
 		setTimeout(() => {
 			table.ajax.reload(null, false)
 		}, 2000)
@@ -232,7 +232,7 @@ let ChatUtil = function () {
 			targetUser = null;
 			roomUser = chatInfo.roomUser;
 		}
-		console.log(roomUser)
+		// console.log(roomUser)
 		initCloseChatModalHandler();
 		openChatModal(chatInfo.user, roomUser, initCloseChatModalHandler)
 		historyChatMessageList = await getRoomChatMessageInfo(currentTaskId);
@@ -245,7 +245,7 @@ let ChatUtil = function () {
 		$('#chat-modal').modal('show');
 		if (Array.isArray(targetUser)) {
 			let memberName = targetUser.map(user => user.username + `(${user.roleName})`).join(',&nbsp;&nbsp;')
-			$('#chat-modal').find('.modal-title').html(DOMPurify.sanitize(`Room Chat <p class="text-primary fs-6 fst-italic fw-bold">${memberName}</p>`));
+			$('#chat-modal').find('.modal-title').html(DOMPurify.sanitize(`Room Chat <p class="text-primary fs-6 fst-italic fw-bold" style="height:50px;overflow-y:auto;">${memberName}</p>`));
 		} else {
 			$('#chat-modal').find('.modal-title').html(DOMPurify.sanitize(targetUser.username + ` <p class="text-primary fs-6 fst-italic fw-bold">${targetUser.roleName}</p>`));
 		}

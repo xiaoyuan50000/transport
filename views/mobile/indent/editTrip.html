@@ -293,7 +293,7 @@
                     <div id="vehicle-row" class="mb-2 row">
                         <label for="noOfVehicle" class="col-12 col-sm-12 form-item form-label">No. Of Resource:</label>
                         <div class="col-12 col-sm-12" style="margin-left: 3%;width: 94.1%;">
-                            <input type="number" class="form-control" id="noOfVehicle" name="noOfVehicle" onKeypress="return (/[\d]/.test(String.fromCharCode(event.keyCode)))"
+                            <input type="number" class="form-control" id="noOfVehicle" name="noOfVehicle" onKeypress="return (/^\d+$/.test(String.fromCharCode(event.keyCode)))"
                                 autocomplete="off">
                         </div>
                     </div>
@@ -357,7 +357,7 @@
                         <label for="contactNumber" class="col-12 col-sm-12 form-item form-label">Mobile Number:</label>
                         <div class="col-12 col-sm-12" style="display: flex;">
                             <span style="margin-left: 3%; width: 16%;" class="input-group-text" id="contactNumberPrefix">+65</span>
-                            <input style="width: 78%;" type="text" class="form-control" id="contactNumber" name="contactNumber" autocomplete="off" onKeypress="return (/[\d]/.test(String.fromCharCode(event.keyCode)))">
+                            <input style="width: 78%;" type="text" class="form-control" id="contactNumber" name="contactNumber" autocomplete="off" onKeypress="return (/^\d+$/.test(String.fromCharCode(event.keyCode)))">
                         </div>
                     </div>
                 </form>
@@ -497,7 +497,7 @@
 <script type="text/html" id="disposalHtmlEnd">
     <label class="col-12 col-sm-12 form-item form-label">Duration:</label>
     <div class="col-12 col-sm-12" style="display: flex;justify-content: center;align-items: center;">
-        <input style="width: calc(94% - 40px); border-radius: 0.25rem 0 0 0.25rem;" type="number" min="1" class="form-control form-item" id="duration" name="duration" autocomplete="off" onKeypress="return (/[\d]/.test(String.fromCharCode(event.keyCode)))">
+        <input style="width: calc(94% - 40px); border-radius: 0.25rem 0 0 0.25rem;" type="number" min="1" class="form-control form-item" id="duration" name="duration" autocomplete="off" onpaste="return false" onKeypress="return (/^\d+$/.test(String.fromCharCode(event.keyCode)))">
         <span class="duration-nuit-ele">hr</span>
     </div>
 </script>

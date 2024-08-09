@@ -160,7 +160,7 @@ app.use(function (err, req, res, next) {
 	log4js.logger("error").error(err);
 	// render the error page
 	res.status(err.status || 500);
-	Response.error(res, err.message, 500);
+	Response.error(res, "Operation failed!", 0);
 });
 
 process.on('uncaughtException', function (e) {

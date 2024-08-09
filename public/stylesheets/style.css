@@ -476,3 +476,11 @@ fieldset[disabled] .btn-preview-close.active {
   background-color: #204B4D !important;
   border-color: #204B4D !important;
 }
+
+.table-round tr th:nth-last-child(1) {
+  border-top-right-radius: 15px;
+}
+
+.table-round tr th:nth-child(1) {
+  border-top-left-radius: 15px;
+}

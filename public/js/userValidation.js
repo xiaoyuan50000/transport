@@ -32,7 +32,7 @@ let mobileNumberReg = {
     valid: function (data) {
         let result = { success: true, errorMsg: "" }
         let firstNumber = data.substring(0, 1)
-        if (!(data.length == 8 && (firstNumber == "8" || firstNumber == "9"))) {
+        if (!(data.length == 8 && (firstNumber == "8" || firstNumber == "9") && /^\d+$/.test(data))) {
             result.success = false
             result.errorMsg = ErrorMessage.InvalidMobileNumber
         }

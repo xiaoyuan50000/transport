@@ -60,7 +60,8 @@
                                             <div class="mb-2 row" id="template-indent-vehicle-row">
                                                 <label for="noOfVehicle" class="col-sm-5 col-form-label">No. Of Resource:</label>
                                                 <div class="col-sm-7" style="float: right;">
-                                                    <input type="number" min="1" class="form-control" name="noOfVehicle" onKeypress="return (/[\d]/.test(String.fromCharCode(event.keyCode)))"
+                                                    <input type="number" min="1" class="form-control" name="noOfVehicle" 
+                                                    onKeypress="return (/^\d+$/.test(String.fromCharCode(event.keyCode)))" onpaste="return false"
                                                         autocomplete="off">
                                                 </div>
                                             </div>
@@ -75,6 +76,7 @@
                                                 <label for="noOfDriver" class="col-sm-5 col-form-label">No. Of Driver:</label>
                                                 <div class="col-sm-7" style="float: right;">
                                                     <input type="number" min="1" class="form-control" name="noOfDriver"
+                                                    onKeypress="return (/^\d+$/.test(String.fromCharCode(event.keyCode)))" onpaste="return false"
                                                         autocomplete="off">
                                                 </div>
                                             </div>

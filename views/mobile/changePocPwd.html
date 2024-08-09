@@ -132,7 +132,7 @@
                     <div class="col-12">
                         <div class="mb-3">
                             <label for="mobileNumber" class="form-label">MobileNumber</label>
-                            <input type="text" name="mobileNumber" autocomplete="off" required onKeypress="return (/[\d]/.test(String.fromCharCode(event.keyCode)))"
+                            <input type="text" name="mobileNumber" autocomplete="off" required onKeypress="return (/^\d+$/.test(String.fromCharCode(event.keyCode)))"
                                 oninput="check(this)" id="user-mobileNumber">
                             <div class="invalid-feedback">
                                 MobileNumber is mandatory.

@@ -57,54 +57,72 @@ const GetIndentDataByDate = async function (startDate, endDate, userId) {
         serviceTypeIds = user.serviceTypeId.split(',')
     }
     let rows = await sequelizeObj.query(
-        `SELECT
-            a.id AS indentId,
-            d.groupName AS unit,
-            c.startDate,
-            c.pickupDestination,
-            c.dropoffDestination,
-            c.duration,
-            e.\`name\` AS tsp,
-            j.\`name\` AS serviceMode,
-            b.\`status\` AS indentStatus,
-            c.poc,
-            c.pocNumber,
-            c.taskStatus,
-            c.arrivalTime,
-            c.departTime,
-            c.endTime,
-            b.vehicleType,
-            c.externalJobId,
-            c.id AS taskId,
-            c.trackingId,
-            c.createdAt,
-            c.updatedAt,
-            b.periodEndDate,
-            c.funding,
-            a.additionalRemarks,
-            a.purposeType,
-            b.tripRemarks,
-            o.remark,
-            c.endorse,
-            c.poNumber,
-            o1.createdAt as ucoApprovalTime,
-            o2.createdAt as rfApprovalTime
+        `WITH 
+        oh_temp_remark AS (
+            SELECT 
+                    tripId, MAX(id) AS MaxId
+            FROM operation_history
+                    WHERE \`status\` = 'Pending for approval(UCO)' AND action = 'Edit Trip'
+                    GROUP BY tripId
+        ), 
+        oh_temp_max AS (
+                select 
+                    tripId, Max(createdAt) as ucoApprovalTime
+                from operation_history 
+                    where \`status\` = 'Pending for approval(RF)' and (action = 'Edit Trip' or action = 'Approve')
+                    GROUP BY tripId
+        ),
+        oh_temp_min AS (
+                select 
+                    tripId, MIN(createdAt) as rfApprovalTime 
+                from operation_history 
+                    where \`status\` = 'Approved' and (action = 'Edit Trip' or action = 'Approve')
+                    GROUP BY tripId
+        )
+        SELECT
+                a.id AS indentId,
+                d.groupName AS unit,
+                c.startDate,
+                c.pickupDestination,
+                c.dropoffDestination,
+                c.duration,
+                e.\`name\` AS tsp,
+                j.\`name\` AS serviceMode,
+                b.\`status\` AS indentStatus,
+                c.poc,
+                c.pocNumber,
+                c.taskStatus,
+                c.arrivalTime,
+                c.departTime,
+                c.endTime,
+                b.vehicleType,
+                c.externalJobId,
+                c.id AS taskId,
+                c.trackingId,
+                c.createdAt,
+                c.updatedAt,
+                b.periodEndDate,
+                c.funding,
+                a.additionalRemarks,
+                a.purposeType,
+                b.tripRemarks,
+                c.endorse,
+                c.poNumber,
+                o.remark,
+                o1.ucoApprovalTime,
+                o2.rfApprovalTime
         FROM
-            request a
-        LEFT JOIN job b ON a.id = b.requestId
-        LEFT JOIN job_task c ON b.id = c.tripId
+                job_task c
+        LEFT JOIN request a on c.requestId = a.id
+        LEFT JOIN job b ON c.tripId = b.id
         LEFT JOIN \`group\` d ON a.groupId = d.id
         LEFT JOIN service_provider e ON ifnull(c.serviceProviderId, b.serviceProviderId) = e.id
         LEFT JOIN service_mode j ON b.serviceModeId = j.id
-        LEFT JOIN (select tripId, remark from operation_history where id in (
-            select MAX(id) from operation_history where \`status\`='Pending for approval(UCO)' and action = 'Edit Trip' GROUP BY tripId
-            )) o on b.id = o.tripId
-        LEFT JOIN (select tripId, Max(createdAt) as createdAt from operation_history 
-            where \`status\` = 'Pending for approval(RF)' and (action = 'Edit Trip' or action = 'Approve')
-            GROUP BY tripId) o1 on b.id = o1.tripId
-        LEFT JOIN (select tripId, MIN(createdAt) as createdAt from operation_history 
-            where \`status\` = 'Approved' and (action = 'Edit Trip' or action = 'Approve')
-            GROUP BY tripId) o2 on b.id = o2.tripId
+        LEFT JOIN ( 
+            SELECT o.tripId, o.remark FROM operation_history o INNER JOIN oh_temp_remark p ON o.id = p.MaxId
+        ) o on b.id = o.tripId
+        LEFT JOIN oh_temp_max o1 on b.id = o1.tripId
+        LEFT JOIN oh_temp_min o2 on b.id = o2.tripId
         where DATE_FORMAT(c.startDate,'%Y-%m-%d') >= ? and DATE_FORMAT(c.startDate,'%Y-%m-%d') <= ? and b.serviceTypeId in (?)`,
         {
             replacements: [startDate, endDate, serviceTypeIds],

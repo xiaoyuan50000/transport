@@ -98,7 +98,7 @@
                                     <div class="mb-2 row">
                                         <label for="noOfVehicle" class="col-sm-5 col-form-label">No. Of Resource:</label>
                                         <div class="col-sm-7" style="float: right;">
-                                            <input type="number" min="1" class="form-control" id="noOfVehicle" name="noOfVehicle" onKeypress="return (/[\d]/.test(String.fromCharCode(event.keyCode)))"
+                                            <input type="number" min="1" class="form-control" id="noOfVehicle" name="noOfVehicle" onKeypress="return (/^\d+$/.test(String.fromCharCode(event.keyCode)))"
                                                 autocomplete="off">
                                         </div>
                                     </div>
@@ -167,7 +167,7 @@
                                         <div class="col-sm-7">
                                             <div class="input-group">
                                                 <span class="input-group-text" id="contactNumberPrefix">+65</span>
-                                                <input type="text" class="form-control" id="contactNumber" name="contactNumber" autocomplete="off" onKeypress="return (/[\d]/.test(String.fromCharCode(event.keyCode)))">
+                                                <input type="text" class="form-control" id="contactNumber" name="contactNumber" autocomplete="off" onKeypress="return (/^\d+$/.test(String.fromCharCode(event.keyCode)))">
                                             </div>
                                         </div>
                                     </div>
@@ -274,7 +274,7 @@
     </div>
     <div class="col-sm-7 mb-2">
         <div class="input-group">
-            <input type="number" min="1" class="form-control" id="duration" name="duration" autocomplete="off" onKeypress="return (/[\d]/.test(String.fromCharCode(event.keyCode)))">
+            <input type="number" min="1" class="form-control" id="duration" name="duration" autocomplete="off" oninput="CheckOnInput(this)" onpaste="return false" onKeypress="return (/^\d+$/.test(String.fromCharCode(event.keyCode)))">
             <span class="input-group-text">hr</span>
         </div>
     </div>
@@ -298,7 +298,7 @@
     </div>
     <div class="col-sm-7 mb-2">
         <div class="input-group">
-            <input type="number" min="1" class="form-control" id="duration" name="duration" autocomplete="off" onKeypress="return (/[\d]/.test(String.fromCharCode(event.keyCode)))">
+            <input type="number" min="1" class="form-control" id="duration" name="duration" autocomplete="off" oninput="CheckOnInput(this)" onpaste="return false" onKeypress="return (/^\d+$/.test(String.fromCharCode(event.keyCode)))">
             <span class="input-group-text">hr</span>
         </div>
     </div>
@@ -337,8 +337,8 @@
             <label class="col-form-label">No. Of Pre-Park:</label>
         </div>
         <div class="col-sm-7">
-            <input type="number" min="1" class="form-control" id="preParkQty" name="preParkQty" autocomplete="off" oninput="checkPreparkNum();" 
-            onKeypress="return (/[\d]/.test(String.fromCharCode(event.keyCode)))">
+            <input type="number" min="1" class="form-control" id="preParkQty" name="preParkQty" autocomplete="off" oninput="checkPreparkNum();" onpaste="return false"
+            onKeypress="return (/^\d+$/.test(String.fromCharCode(event.keyCode)))">
         </div>
     </div>
 </script>
@@ -362,8 +362,8 @@
     <div class="mb-2 row" id="vehicle-row">
         <label for="noOfVehicle" class="col-sm-5 col-form-label">No. Of Resource:</label>
         <div class="col-sm-7" style="float: right;">
-            <input type="number" min="1" class="form-control" id="noOfVehicle" name="noOfVehicle" onKeypress="return (/[\d]/.test(String.fromCharCode(event.keyCode)))"
-                autocomplete="off">
+            <input type="number" min="1" class="form-control" id="noOfVehicle" name="noOfVehicle" oninput="CheckOnInput(this)" onKeypress="return (/^\d+$/.test(String.fromCharCode(event.keyCode)))"
+                autocomplete="off" onpaste="return false">
         </div>
     </div>
     <div class="mb-2 row" id="driver-row" style="display: none;">
@@ -377,7 +377,7 @@
         <label for="noOfDriver" class="col-sm-5 col-form-label">No. Of Driver:</label>
         <div class="col-sm-7" style="float: right;">
             <input type="number" min="1" oninput="checkDriverNum();" class="form-control" id="noOfDriver" name="noOfDriver"
-                autocomplete="off">
+                autocomplete="off" onpaste="return false">
         </div>
     </div>
 
@@ -460,7 +460,7 @@
         <div class="col-sm-7">
             <div class="input-group">
                 <span class="input-group-text" id="contactNumberPrefix">+65</span>
-                <input type="text" class="form-control" id="contactNumber" name="contactNumber" autocomplete="off" onKeypress="return (/[\d]/.test(String.fromCharCode(event.keyCode)))">
+                <input type="text" class="form-control" id="contactNumber" name="contactNumber" autocomplete="off" oninput="CheckOnInput(this)" onKeypress="return (/^\d+$/.test(String.fromCharCode(event.keyCode)))">
             </div>
         </div>
     </div>
@@ -503,7 +503,7 @@
     <div class="mb-2 row">
         <label for="litres" class="col-sm-5 col-form-label">Quantity(Litres):</label>
         <div class="col-sm-7">
-            <input type="number" min="1" class="form-control" id="litres" name="litres" autocomplete="off" onKeypress="return (/[\d]/.test(String.fromCharCode(event.keyCode)))">
+            <input type="number" min="1" class="form-control" id="litres" name="litres" autocomplete="off" onKeypress="return (/^\d+$/.test(String.fromCharCode(event.keyCode)))">
         </div>
     </div>
     <div class="mb-2 row">
@@ -539,7 +539,7 @@
         <div class="col-sm-7">
             <div class="input-group">
                 <span class="input-group-text">+65</span>
-                <input type="text" class="form-control" id="fuelContactNumber" name="fuelContactNumber" autocomplete="off" onKeypress="return (/[\d]/.test(String.fromCharCode(event.keyCode)))">
+                <input type="text" class="form-control" id="fuelContactNumber" name="fuelContactNumber" autocomplete="off" onKeypress="return (/^\d+$/.test(String.fromCharCode(event.keyCode)))">
             </div>
         </div>
     </div>

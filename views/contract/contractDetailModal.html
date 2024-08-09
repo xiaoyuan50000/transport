@@ -93,19 +93,19 @@
                             <div class="mb-2 row">
                                 <label for="maxTrips" class="col-sm-5 col-form-label">Max Trips:</label>
                                 <div class="col-sm-7">
-                                    <input type="number" class="form-control" name="maxTrips" autocomplete="off" onKeypress="return (/[\d]/.test(String.fromCharCode(event.keyCode)))">
+                                    <input type="number" class="form-control" name="maxTrips" autocomplete="off" onKeypress="return (/^\d+$/.test(String.fromCharCode(event.keyCode)))" onpaste="return false">
                                 </div>
                             </div>
                             <div class="mb-2 row">
                                 <label for="maxTripsPerDay" class="col-sm-5 col-form-label">Max Trips Per Day:</label>
                                 <div class="col-sm-7">
-                                    <input type="number" class="form-control" name="maxTripsPerDay" autocomplete="off" onKeypress="return (/[\d]/.test(String.fromCharCode(event.keyCode)))">
+                                    <input type="number" class="form-control" name="maxTripsPerDay" autocomplete="off" onKeypress="return (/^\d+$/.test(String.fromCharCode(event.keyCode)))" onpaste="return false">
                                 </div>
                             </div>
                             <div class="mb-2 row">
                                 <label for="maxTripsPerMonth" class="col-sm-5 col-form-label">Max Trips Per Month:</label>
                                 <div class="col-sm-7">
-                                    <input type="number" class="form-control" name="maxTripsPerMonth" autocomplete="off" onKeypress="return (/[\d]/.test(String.fromCharCode(event.keyCode)))">
+                                    <input type="number" class="form-control" name="maxTripsPerMonth" autocomplete="off" onKeypress="return (/^\d+$/.test(String.fromCharCode(event.keyCode)))" onpaste="return false">
                                 </div>
                             </div>
                         </form>

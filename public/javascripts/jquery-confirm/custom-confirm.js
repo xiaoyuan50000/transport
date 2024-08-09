@@ -136,3 +136,12 @@ function continueNewTrip(title, content, onContentReady, callback) {
         }
     });
 }
+
+axios.interceptors.response.use(response => {
+    return response;
+}, error => {
+    if (error.response && error.response.status === 500) {
+        simplyAlert(error.response.data.msg, 'red');
+    }
+    return Promise.reject(error);
+});

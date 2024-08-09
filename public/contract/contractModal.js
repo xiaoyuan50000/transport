@@ -555,6 +555,7 @@ const CheckOnInput = function (e) {
     e.value = e.value
         .replace(/^0+/, '')
         .replace(/^\./g, '')
+        .replace(/(\.[^.]*).*/, '$1')
         .replace(/[^\d.]/g, '')
         .replace(/\./g, '.')
         .replace(/^(-)?(\d+)\.(\d\d).*$/, '$1$2.$3');

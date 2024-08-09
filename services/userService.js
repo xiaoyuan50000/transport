@@ -314,7 +314,7 @@ const doCreateUser = async function (req, res, isPoc) {
         return Response.success(res, true)
     } catch (ex) {
         log.error(ex)
-        return Response.error(res, "Server error!")
+        return Response.error(res, "Create/edit user failed!")
     }
 }
 
@@ -647,7 +647,7 @@ module.exports.ConfirmLock = async function (req, res) {
         return Response.success(res, true)
     } catch (ex) {
         log.error(ex)
-        return Response.error(res, "Server error!")
+        return Response.error(res, "Unlock user failed!")
     }
 }
 
@@ -820,7 +820,7 @@ module.exports.ConfirmActive = async function (req, res) {
         return Response.success(res, true)
     } catch (ex) {
         log.error(ex)
-        return Response.error(res, "Server error!")
+        return Response.error(res, "Activate user failed!")
     }
 }
 
@@ -900,7 +900,7 @@ module.exports.ChangePassword = async function (req, res) {
         return Response.success(res, true)
     } catch (ex) {
         log.error(ex)
-        return Response.error(res, "Server error!")
+        return Response.error(res, "Change password failed!")
     }
 }
 

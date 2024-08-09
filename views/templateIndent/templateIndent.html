@@ -116,7 +116,7 @@
                                                     Resource:</label>
                                                 <div class="col-sm-7" style="float: right;">
                                                     <input type="number" min="1" class="form-control" name="noOfVehicle"
-                                                        onKeypress="return (/[\d]/.test(String.fromCharCode(event.keyCode)))"
+                                                        onKeypress="return (/^\d+$/.test(String.fromCharCode(event.keyCode)))" onpaste="return false"
                                                         autocomplete="off">
                                                 </div>
                                             </div>
@@ -133,6 +133,7 @@
                                                     Driver:</label>
                                                 <div class="col-sm-7" style="float: right;">
                                                     <input type="number" min="1" class="form-control" name="noOfDriver"
+                                                        onKeypress="return (/^\d+$/.test(String.fromCharCode(event.keyCode)))" onpaste="return false"
                                                         autocomplete="off">
                                                 </div>
                                             </div>

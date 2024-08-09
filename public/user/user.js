@@ -172,10 +172,10 @@ const check = async function (input) {
                 errorMsg = loginNameReg.valid(nric, username).errorMsg
             }
         } else if (name == "mobileNumber") {
-            console.log(value)
+            // console.log(value)
             errorMsg = mobileNumberReg.valid(value).errorMsg
         } else if (name == "email") {
-            console.log(value)
+            // console.log(value)
             errorMsg = emailReg.valid(value).errorMsg
         }
     }
@@ -196,7 +196,7 @@ const saveUser = async function () {
     }
     obj.serviceTypeId = serviceTypeId
     obj.ord = top.changeDateFormat(obj.ord)
-    console.log(obj)
+    // console.log(obj)
     await axios.post("/createUser", obj).then((res) => {
         if (res.data.code == 1) {
             _selfModal.hide()

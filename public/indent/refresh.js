@@ -17,14 +17,14 @@ const StartRefreshIndent = function () {
                 }
             }
         }, refreshInterval)
-        console.log("Start refresh page")
+        // console.log("Start refresh page")
     }
 }
 
 const StopRefreshIndent = function () {
     window.clearInterval(v)
     v = null
-    console.log("Stop refresh page")
+    // console.log("Stop refresh page")
 }
 
 StartRefreshIndent()
