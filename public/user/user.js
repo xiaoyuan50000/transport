@@ -17,6 +17,7 @@ let dateFormat = "DD/MM/YYYY";
 let isEdit = false;
 const occ = ["OCC MGR"]
 let userHistoryTable;
+let currentRow = null;
 
 let viewHistoryBtn = `<img src="../images/user/View History.svg">`
 let deactivateBtn = `<img src="../images/user/Deactivate.svg">`
@@ -41,7 +42,7 @@ const resetForm = function () {
 }
 const addBtnListening = function () {
     _selfModal.init("CreateUserModal")
-
+    
     modalOpenBtn.on("click", function () {
         resetForm()
         addFormValidation();
@@ -50,6 +51,7 @@ const addBtnListening = function () {
     });
     modalCloseBtn.on("click", function () {
         _selfModal.hide()
+        currentRow = null
     });
     nricInput.on("keyup", function () {
         this.value = this.value.toUpperCase()
@@ -162,18 +164,32 @@ const check = async function (input) {
     errorMsg = value == "" ? errorFieldName + " is mandatory." : ""
 
     if (value != "") {
-        if ((name == "nric" || name == "username") && !isEdit) {
+        if (name == "nric") {
             let nric = $("#user-nric").val()
-            let username = $("#user-username").val()
-            let validNricResult = loginNameReg.validNric(nric)
+            let validNricResult = nricReg.valid(nric)
             if (!validNricResult.success) {
                 errorMsg = validNricResult.errorMsg
-            } else if (username != "" && !isEdit) {
-                errorMsg = loginNameReg.valid(nric, username).errorMsg
+            } else {
+                let username = $("#user-username").val()
+                let userId = $("#user-id").val()
+                if (username != "") {
+                    errorMsg = loginNameReg.valid(nric, username, userId).errorMsg
+                }
+            }
+        }
+        else if (name == "username") {
+            let nric = $("#user-nric").val()
+            let username = $("#user-username").val()
+            let userId = $("#user-id").val()
+            if (username != "") {
+                errorMsg = loginNameReg.valid(nric, username, userId).errorMsg
             }
         } else if (name == "mobileNumber") {
             // console.log(value)
             errorMsg = mobileNumberReg.valid(value).errorMsg
+            if (!errorMsg && currentRow && currentRow.contactNumber != value) {
+                errorMsg = mobileNumberReg.contractNumberExist(value).errorMsg
+            }
         } else if (name == "email") {
             // console.log(value)
             errorMsg = emailReg.valid(value).errorMsg
@@ -356,6 +372,7 @@ const disabledRoleSelect = function (roleName) {
 const edit = async function (e) {
     isEdit = true
     let row = table.row($(e).data("row")).data();
+    currentRow = row
     resetForm()
     addFormValidation();
     _selfModal.show()

@@ -101,6 +101,22 @@ let nricReg = {
     test: function (data) {
         return validateNRIC(data)
     },
+    exist: function (data) {
+        let result = false
+        $.ajax({
+            method: "post",
+            url: "/getUserExistByNric",
+            async: false,
+            data: { nric: data },
+            success: function (res) {
+                result = res.data
+            },
+            error: function (error) {
+                console.log(error);
+            }
+        })
+        return result
+    },
     valid: function (data) {
         let result = { success: true, errorMsg: "" }
         // check invalid nric 
@@ -109,8 +125,8 @@ let nricReg = {
             result.errorMsg = ErrorMessage.InvalidNric
         } else {
             // check nric exist
-            let exist = this.exist(data)
-            if (exist) {
+            let isExist = this.exist(data)
+            if (isExist) {
                 result.success = false
                 result.errorMsg = ErrorMessage.ExistNric
             }
@@ -120,15 +136,15 @@ let nricReg = {
 };
 
 let loginNameReg = {
-    loginNameExist: function (nric, username) {
-        let result = false
+    loginNameExist: function (nric, username, userId) {
+        let result = { data: false }
         $.ajax({
             method: "post",
             url: "/getUserExistByLoginName",
             async: false,
-            data: { nric: nric, username: username },
+            data: { nric: nric, username: username, currentId: userId },
             success: function (res) {
-                result = res.data
+                result = res
             },
             error: function (error) {
                 console.log(error);
@@ -144,17 +160,17 @@ let loginNameReg = {
         }
         return result
     },
-    valid: function (nric, username) {
+    valid: function (nric, username, userId) {
         let result = { success: true, errorMsg: "" }
         if (username.replaceAll(" ", "").length < 3) {
             result.success = false
             result.errorMsg = ErrorMessage.InvalidName
         }
         // check nric exist
-        let exist = this.loginNameExist(nric, username)
-        if (exist) {
+        let exist = this.loginNameExist(nric, username, userId)
+        if (exist.data) {
             result.success = false
-            result.errorMsg = ErrorMessage.ExistLoginName
+            result.errorMsg = exist.msg
         }
         return result
     }

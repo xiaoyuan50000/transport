@@ -301,8 +301,10 @@ const doCreateUser = async function (req, res, isPoc) {
                 user.ord = ord
                 await user.save()
 
-                actionRecord.beforeData = MVOperationRecord.beforeData
-                actionRecord.afterData = MVOperationRecord.afterData
+                if (MVOperationRecord) {
+                    actionRecord.beforeData = MVOperationRecord.beforeData
+                    actionRecord.afterData = MVOperationRecord.afterData
+                }
                 await UserManagementReport.create(actionRecord)
             })
 
@@ -825,14 +827,66 @@ module.exports.ConfirmActive = async function (req, res) {
 }
 
 module.exports.GetUserExistByLoginName = async function (req, res) {
-    let { nric, username } = req.body
+    let { nric, username, currentId } = req.body
+
+    if (currentId) {
+        let user = await User.findByPk(currentId)
+        if (user && user.username == username) {
+            return res.json({ data: false })
+        }
+        if (user && user.nric && !nric) {
+            nric = utils.decodeAESCode(user.nric)
+        }
+    }
+
     let loginName = utils.GetLoginName(nric, username)
+    let userBaseObj = await sequelizeDriverObj.query(
+        `select id, cvUserId, mvUserId from user_base where loginName = ? and fullName = ? and rejectDate is null and cvRejectDate is null and cvUserId is null and mvUserId is not null`,
+        {
+            replacements: [loginName, username],
+            type: QueryTypes.SELECT
+        }
+    )
+    if (userBaseObj[0] && userBaseObj[0].id) {
+        return res.json({ data: true, msg: "Account has been created in MV." })
+    }
     let user = await User.findOne({ where: { loginName: loginName, username: username } })
+    if (user) {
+        return res.json({ data: true, msg: "Login Name already exists." })
+    }
+    return res.json({ data: false })
+}
+
+module.exports.GetUserExistByNric = async function (req, res) {
+    let { nric } = req.body
+    let nricAESCode = utils.generateAESCode(nric)
+
+    let userBaseObj = await sequelizeDriverObj.query(
+        `select id, cvUserId, mvUserId from user_base where rejectDate is null and cvRejectDate is null and nric = ?`,
+        {
+            replacements: [nricAESCode],
+            type: QueryTypes.SELECT
+        }
+    )
+    if (userBaseObj[0] && userBaseObj[0].id) {
+        return res.json({ data: true })
+    }
+    let user = await User.findOne({ where: { nric: nricAESCode } })
     return res.json({ data: user != null })
 }
 
 module.exports.GetUserExistByContactNumber = async function (req, res) {
     let { contactNumber } = req.body
+    let userBaseObj = await sequelizeDriverObj.query(
+        `select id, cvUserId, mvUserId from user_base where rejectDate is null and cvRejectDate is null and contactNumber = ?`,
+        {
+            replacements: [contactNumber],
+            type: QueryTypes.SELECT
+        }
+    )
+    if (userBaseObj[0] && userBaseObj[0].id) {
+        return res.json({ data: true })
+    }
     let user = await User.findOne({ where: { contactNumber: contactNumber } })
     return res.json({ data: user != null })
 }

@@ -167,6 +167,7 @@ router.post('/transportJsonApi', apiService.TransportJsonApi);
 router.post('/getAllServiceProvider', serviceProvider.GetAllServiceProvider)
 // user
 router.post('/getUserExistByLoginName', userService.GetUserExistByLoginName);
+router.post('/getUserExistByNric', userService.GetUserExistByNric);
 router.post('/createUser', userService.CreateUser);
 router.post('/registerPocUser', userService.RegisterPocUser);
 router.post('/initUserTable', userService.InitUserTable);
