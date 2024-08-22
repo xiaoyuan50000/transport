@@ -15,7 +15,10 @@ module.exports.PurposeMode = dbConf.sequelizeObj.define('purpose_mode', {
     },
     groupId: {
         type: DataTypes.STRING(255),
-    }
+    },
+    ngtsId: {
+        type: DataTypes.STRING(255),
+    },
 }, {
     timestamps: false,
 });

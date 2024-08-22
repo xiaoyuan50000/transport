@@ -593,8 +593,8 @@ const initUnitOwnFund = function (serviceType) {
     $("#wogTSP").append('<option value=""></option>')
     $("#wogTSP").attr("disabled", true)
 
-    if (serviceType && serviceType.toLowerCase().indexOf("bus") != -1 && showUnitOwnFund && isCreatedByRQ) {
-        $("#unit-own-fund-row").show()
+    if (serviceType && serviceType.toLowerCase().endsWith("bus") && showUnitOwnFund && isCreatedByRQ) {
+        // $("#unit-own-fund-row").show()
     } else {
         $("#unit-own-fund-row").hide()
         $(`#unit-own-fund-row input[type=radio][value="0"]`).prop("checked", true)

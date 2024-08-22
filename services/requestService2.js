@@ -358,7 +358,7 @@ const DoCreateTrip = async function (indent, serviceProviderId, pickupDestinatio
         if (unitOwnFund) {
             val.serviceProviderId = wogTSP
             val.funding = "Unit"
-        } else if (serviceTypeObj.name.toLowerCase().startsWith('bus') && !unitOwnFund) {
+        } else if (serviceTypeObj.name.toLowerCase().endsWith('bus') && !unitOwnFund) {
             val.funding = "Central"
         }
     })
@@ -1384,7 +1384,7 @@ const DoEditTrip = async function (pickupDestination, pickupNotes, dropoffDestin
         if (unitOwnFund) {
             val.serviceProviderId = wogTSP
             val.funding = "Unit"
-        } else if (serviceTypeObj.name.toLowerCase().startsWith('bus') && !unitOwnFund) {
+        } else if (serviceTypeObj.name.toLowerCase().endsWith('bus') && !unitOwnFund) {
             val.funding = "Central"
         }
     })

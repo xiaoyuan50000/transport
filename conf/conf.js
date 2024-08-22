@@ -3,7 +3,7 @@
  */
 module.exports.dbConf = {
     host: 'localhost',
-	// host: '192.168.1.18',
+	// host: '192.168.1.11',
     user: 'root',
     password: 'root',
     // port: 6446,
@@ -17,7 +17,7 @@ module.exports.dbConf = {
 
 module.exports.driverDbConf = {
     host: 'localhost',
-	// host: '192.168.1.18',
+	// host: '192.168.1.11',
     user: 'root',
     password: 'root',
     port: 3306,
@@ -117,3 +117,9 @@ module.exports.view_nric = false
 module.exports.atms_server_url = 'http://localhost:5022'
 
 module.exports.system_cancel_schedule_cron = '0 */1 * * * *'
+
+module.exports.proxy = {
+    host: '10.15.11.12',
+    port: 3021,
+    protocol: 'http',
+}

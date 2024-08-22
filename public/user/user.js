@@ -15,7 +15,7 @@ let ordInput = form.find("input[name='ord']")
 let table;
 let dateFormat = "DD/MM/YYYY";
 let isEdit = false;
-const occ = ["OCC MGR"]
+const occ = ["OCC Mgr"]
 let userHistoryTable;
 let currentRow = null;
 

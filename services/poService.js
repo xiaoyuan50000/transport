@@ -106,9 +106,9 @@ const GetInvoiceByMonthly = async function (serviceProviderId, noOfMonth, start,
                     DATE_FORMAT(b.executionDate, '%Y-%m') monthly,
                     DATE_FORMAT(b.executionDate, '%m') noOfMonth,
                     '' AS requestId,
-                    GROUP_CONCAT(b.id) as taskIds,
+                    GROUP_CONCAT(DISTINCT b.id) as taskIds,
                     b.poNumber,
-                    count(b.id) AS noOfTrips,
+                    count(DISTINCT b.id) AS noOfTrips,
                     0 as iamounts
                 FROM
                     job_task b
@@ -173,15 +173,15 @@ const GetPOTableDetails = async function (pageResult, isMonthly) {
         row.noOfGeneratedTrips = POList.length
         row.generatedTime = POList.length > 0 ? POList[0].generatedTime : ""
         row.amounts = _.sumBy(POList, (o) => { return Number(o.total) })
-        row.surchargeAmounts = _.sumBy(POList, (o) => { 
+        row.surchargeAmounts = _.sumBy(POList, (o) => {
             return Number(o.surchargeLessThen48)
-            +Number(o.surchargeGenterThen12)
-            +Number(o.surchargeLessThen12) 
-            +Number(o.surchargeLessThen4) 
-            +Number(o.surchargeDepart) 
-            +Number(o.transCostSurchargeLessThen4) 
+                + Number(o.surchargeGenterThen12)
+                + Number(o.surchargeLessThen12)
+                + Number(o.surchargeLessThen4)
+                + Number(o.surchargeDepart)
+                + Number(o.transCostSurchargeLessThen4)
         })
-        
+
         let initialPOList = []
         if (!isMonthly) {
             initialPOList = await sequelizeObj.query(
@@ -402,9 +402,9 @@ const GetInvoiceByIndent = async function (serviceProviderId, indentId, start, l
                     b.serviceProviderId as id,
                     '' as monthly,
                     b.requestId,
-                    GROUP_CONCAT(b.id) as taskIds,
+                    GROUP_CONCAT(DISTINCT b.id) as taskIds,
                     b.poNumber,
-                    count(b.id) AS noOfTrips,
+                    count(DISTINCT b.id) AS noOfTrips,
                     0 as iamounts
                 FROM
                     job_task b
@@ -476,7 +476,12 @@ module.exports.GeneratePO = async function (req, res) {
     })
     let generatedTaskIds = list.map(a => a.taskId);
     let newTaskIds = _.difference(taskIds, generatedTaskIds)
-
+    log.info('taskIds', taskIds)
+    log.info('generatedTaskIds', generatedTaskIds)
+    log.info('newTaskIds', newTaskIds)
+    if (newTaskIds.length == 0) {
+        return Response.success(res, true)
+    }
     await sequelizeObj.transaction(async (t1) => {
         await initialPoService.CalculatePOByTaskId(newTaskIds, true)
         await budgetService.SaveSpentByTaskId(newTaskIds, userId, t1)

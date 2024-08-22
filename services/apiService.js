@@ -290,6 +290,7 @@ const setDriverObj = async function (reqObj, driverObj, updateObj, task, secretI
                 driverId: driverId,
                 status: driver.driver.status,
                 name: driver.driver.name,
+                nric: Utils.generateAESCode(driver.driver.nric),
                 contactNumber: driver.driver.contact_number,
                 data: JSON.stringify(driver),
             }

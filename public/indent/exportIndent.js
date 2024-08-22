@@ -48,11 +48,73 @@ const InitDateSelector = function () {
 }
 
 const ConfirmExport = async function (startDate, endDate) {
-    axios.post(`/exportIndentToExcel`, { startDate: startDate, endDate: endDate }).then(res => {
-        if (res.data.code == 0) {
-            simplyAlert(res.data.msg)
-        } else {
-            window.location.href = "/downloadIndent?filename=" + res.data.data
-        }
+    
+    const filename = `Indent(${moment(startDate).format("YYYYMMDD")}-${moment(endDate).format("YYYYMMDD")}).xlsx`
+    // axios({
+    //     method: 'post',
+    //     url: '/exportIndentToExcel',
+    //     data: {
+    //         startDate: startDate,
+    //         endDate: endDate
+    //     },
+    //     responseType: 'arraybuffer',
+    // }).then(res => {
+    //     const blob = new Blob([res.data]);
+    //     const url = URL.createObjectURL(blob);
+    //     const link = document.createElement('a');
+    //     link.href = url;
+    //     link.download = filename;
+    //     document.body.appendChild(link);
+    //     link.click();
+    //     document.body.removeChild(link);
+    //     URL.revokeObjectURL(url);
+    // }).catch((err) => {
+    //     simplyAlert("Download failed.",'red')
+    // })
+
+
+    fetch('/exportIndentToExcel', {
+        method: 'post',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: new URLSearchParams({
+            startDate: startDate,
+            endDate: endDate
+        }).toString(),
     })
+        .then(response => {
+            const stream = response.body;
+            const reader = stream.getReader();
+            let chunks = [];
+
+            reader.read().then(function process(value) {
+                if (value.done) {
+                    executeDownloadTask(chunks, filename)
+                    $("#export").html("Export Indent")
+                    $("#export").attr("disabled", false)
+                    document.getElementById('export').style.cssText = '';
+                } else {
+                    chunks.push(value.value);
+                    reader.read().then(process);
+                    $("#export").html(`<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Downloading... `)
+                    $("#export").attr("disabled", true)
+                    $("#export").css("color", "white")
+                }
+            });
+        })
+        .catch((err) => {
+            console.log(err);
+            simplyAlert("Download failed.", 'red')
+        })
+}
+
+const executeDownloadTask = function (chunks, filename) {
+    const blob = new Blob(chunks, { type: 'application/octet-stream' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.click();
+    window.URL.revokeObjectURL(url);
 }

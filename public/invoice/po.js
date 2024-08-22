@@ -25,7 +25,7 @@ let table;
                                 length: d.length, 
                                 action: action,
                                 executionDate: parent.changeFilterExecutionDateFmt($("#execution-date").val()),
-                                creationDate: parent.changeDateFormat($("#created-date").val()),
+                                creationDate: parent.changeFilterExecutionDateFmt($("#created-date").val()),
                             }
                         }
                     },

@@ -99,7 +99,7 @@ app.use(helmet({
 			// "style-src": ["'self' 'unsafe-inline' 'unsafe-eval'"],
 			"connect-src": ["'self'"],
 			"img-src": ["'self' data:"],
-			"form-action": ["'self'"],
+			"form-action": ["'self'", "https://desk.zoho.com/support/WebToCase"],
 			"frame-ancestors": ["'self'"],
 			// 'upgrade-insecure-requests': [],
 		},
@@ -187,8 +187,8 @@ if (!fs.existsSync(indentPath)) fs.mkdirSync(indentPath);
 let invoicePath = path.join('./', 'public/download/invoice/');
 if (!fs.existsSync(invoicePath)) fs.mkdirSync(invoicePath);
 
-let systemCancelService = require('./services/systemCancelService.js');
-systemCancelService.scheduleStart()
+// let systemCancelService = require('./services/systemCancelService.js');
+// systemCancelService.scheduleStart()
 /**
  * Init ActiveMQ Client
  */

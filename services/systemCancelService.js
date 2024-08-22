@@ -20,8 +20,8 @@ module.exports.scheduleStart = function () {
                     LEFT JOIN job_task b ON a.id = b.tripId
                     LEFT JOIN service_type c on a.serviceTypeId = c.id 
                     WHERE 
-                    c.\`name\` NOT LIKE 'Bus%' and c.category = 'CV' 
-                    and b.taskStatus not in ('cancelled')
+                    c.\`name\` NOT LIKE '%Bus' and c.category = 'CV' 
+                    and b.taskStatus not in ('cancelled') and b.funding = 'Unit'
                     and TIME_TO_SEC(TIMEDIFF(CONCAT(b.executionDate,' ', b.executionTime), NOW())) <= 86400
                     and b.poNumber is null`,
                 {

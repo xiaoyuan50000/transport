@@ -21,7 +21,7 @@ let table;
                                 indentId: $("#indentId").val(),
                                 start: d.start, length: d.length,
                                 executionDate: parent.changeFilterExecutionDateFmt($("#execution-date").val()),
-                                creationDate: parent.changeDateFormat($("#created-date").val()),
+                                creationDate: parent.changeFilterExecutionDateFmt($("#created-date").val()),
                             }
                         }
                     },

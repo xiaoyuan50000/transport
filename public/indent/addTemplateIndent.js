@@ -266,7 +266,7 @@ const saveTemplateIndent = function () {
                     trip.preParkQty = null
                 }
 
-                if (row.resourceType.toLowerCase().indexOf('bus') == -1) {
+                if (!row.resourceType.toLowerCase().endsWith('bus')) {
                     trip.unitOwnFund = 0
                     trip.wogTSP = null
                 }

@@ -78,7 +78,8 @@ module.exports.SendDataTo3rd = async function (allocateeId, data) {
         headers: {
             'Content-Type': 'application/json'
         },
-        data: data
+        data: data,
+        proxy: conf.proxy
     }
 
     return await axios(config).then((result) => {
@@ -104,7 +105,8 @@ module.exports.UpdateJob = async function (jobId, data) {
         headers: {
             'Content-Type': 'application/json'
         },
-        data: data
+        data: data,
+        proxy: conf.proxy
     }
 
     return await axios(config).then((result) => {
@@ -127,6 +129,7 @@ module.exports.CancelJob = async function (jobId) {
         headers: {
             'Content-Type': 'application/json'
         },
+        proxy: conf.proxy
     }
 
     return await axios(config).then((result) => {
@@ -149,6 +152,7 @@ module.exports.GetDriverFrom3rd = async function (driverId, secretID, secretKey)
         headers: {
             'Content-Type': 'application/json'
         },
+        proxy: conf.proxy
     }
 
     return await axios(config).then((result) => {
@@ -172,6 +176,7 @@ module.exports.GetVehicleFrom3rd = async function (vehicleId, secretID, secretKe
         headers: {
             'Content-Type': 'application/json'
         },
+        proxy: conf.proxy
     }
 
     return await axios(config).then((result) => {
@@ -194,7 +199,9 @@ module.exports.GetTaskPinFrom3rd = async function (externalTaskId, secretID, sec
         headers: {
             'Content-Type': 'application/json'
         },
+        proxy: conf.proxy
     }
+    
 
     return await axios(config).then((result) => {
         // log.info("3rd Response data: " + result.data)
@@ -425,8 +432,8 @@ module.exports.getSafeFileName = function (p) {
 }
 
 const apiLimiter = {
-	windowMs: 1 * 1000,
-	max: 100,
-	message: "Too many requests from this client, please try again later.",
+    windowMs: 1 * 1000,
+    max: 100,
+    message: "Too many requests from this client, please try again later.",
 }
 module.exports.apiLimiter = apiLimiter

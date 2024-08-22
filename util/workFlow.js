@@ -15,6 +15,9 @@ module.exports.action = action
 
 const url = conf.work_flow_url
 
+const proxy = null
+// const proxy = conf.proxy
+
 module.exports.create = async function (creatorRole, indentId) {
     if (ROLE.OCC.indexOf(creatorRole) != -1) {
         creatorRole = ROLE.RF
@@ -24,6 +27,8 @@ module.exports.create = async function (creatorRole, indentId) {
         creatorRole: creatorRole,
         indentId: indentId,
         operationType: action.create
+    }, {
+        proxy: proxy
     }).then(async res => {
         let data = res.data
         if (data.respCode == 1) {
@@ -49,6 +54,8 @@ module.exports.apply = async function (instanceId, approved, operationType, curr
         approved: approved,
         operationType: operationType,
         currentRole: currentRole,
+    }, {
+        proxy: proxy
     }).then(async res => {
         let data = res.data
         if (data.respCode == 1) {
@@ -70,6 +77,8 @@ module.exports.select = async function (userRole, instanceIdList) {
     return await axios.post(url + "/indent/selectIndent", {
         userRole: userRole,
         instanceIdList: instanceIdList
+    }, {
+        proxy: proxy
     }).then(res => {
         let data = res.data
         if (data.respCode == 1) {
@@ -86,6 +95,8 @@ module.exports.select = async function (userRole, instanceIdList) {
 module.exports.delete = async function (instanceId) {
     return await axios.post(url + "/indent/delete", {
         instanceId: instanceId
+    }, {
+        proxy: proxy
     }).then(res => {
         let data = res.data
         if (data.respCode == 1) {
@@ -108,6 +119,8 @@ module.exports.multyCreate = async function (creatorRole, indentIdList) {
         creatorRole: creatorRole,
         indentIdList: indentIdList,
         operationType: action.create
+    }, {
+        proxy: proxy
     }).then(async res => {
         let data = res.data
         if (data.respCode == 1) {

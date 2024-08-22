@@ -349,7 +349,7 @@ module.exports.GetAllJobs = async function (req, res) {
 
     for (let temp of jobs) {
         if (temp.category.toUpperCase() != 'MV') {
-            if (!temp.resourceType.toLowerCase().startsWith('bus')) {
+            if (!temp.resourceType.toLowerCase().endsWith('bus')) {
                 temp.fundingSelect = [{ name: 'Central' }, { name: 'Unit' }]
             }
             // wallet
