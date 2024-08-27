@@ -3,7 +3,7 @@ const loginRequest = async function () {
     if(!data){
         return
     }
-    await axios.post('./loginUseSingpass', {
+    await axios.post('/loginUseSingpass', {
         data: data,
     }).then(res => {
         if(res.data.code == 0){

@@ -2983,7 +2983,8 @@ const GetTripNo = async function (requestId) {
         },
         order: [
             ['tripNo', "desc"]
-        ]
+        ],
+        useMaster: true
     })
     let count = 0
     if (job) {

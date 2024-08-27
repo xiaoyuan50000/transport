@@ -63,6 +63,10 @@ const loginRequest = async function (username, password, autoLogin = 0) {
     });
 };
 
+function removeCookie(name){
+    document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+}
+
 async function autoLogin() {
 
     let error = $(".login-div").attr("data-error")
@@ -80,7 +84,7 @@ async function autoLogin() {
         if (moment(user.expireDate).diff(moment(new Date()), "s") < 0) {
             //is expired
             localStorage.clear();
-            top.location.href = '/login'
+            top.location.href = '/login#'
         } else if (document.cookie.indexOf("token") == -1) {
             //no expired, but token is null, user is kick out by others.
             localStorage.clear();
@@ -91,7 +95,7 @@ async function autoLogin() {
                 buttons: {
                     OK: {
                         action: function () {
-                            top.location.href = '/login'
+                            top.location.href = '/login#'
                         },
                     },
                 },

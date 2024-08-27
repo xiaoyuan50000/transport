@@ -388,3 +388,4 @@ module.exports.reDirectToRegisterMV = async function (req, res) {
     let str = utils.generateAESCode(info)
     return Response.success(res, { mobius_server_url: conf.mobius_server_url, str: str })
 }
+

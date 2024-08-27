@@ -8,16 +8,17 @@ const Stomp = require('stomp-client');
 const client = new Stomp(...conf.activeMQConf);
 const activemqService = require('../services/activemqService')
 const apiService = require('../services/apiService')
+const { v4: uuidv4 } = require('uuid');
+const randomStr = uuidv4().split('-').join('0')
+const createJobTopic = '/topic/createJob/'+randomStr;
+const cancelJobTopic = '/topic/cancelJob/'+randomStr;
+const updateJobTopic = '/topic/updateJob/'+randomStr;
+const transportAPITopic = '/topic/transportAPI/'+randomStr;
 
-const createJobTopic = '/topic/createJob';
-const cancelJobTopic = '/topic/cancelJob';
-const updateJobTopic = '/topic/updateJob';
-const transportAPITopic = '/topic/transportAPI';
+const bulkCreateJobTopic = '/topic/bulkCreateJob/'+randomStr;
+const bulkCancelJobTopic = '/topic/bulkCancelJob/'+randomStr;
 
-const bulkCreateJobTopic = '/topic/bulkCreateJob';
-const bulkCancelJobTopic = '/topic/bulkCancelJob';
-
-const taskAcceptTopic = '/topic/taskAcceptTopic';
+const taskAcceptTopic = '/topic/taskAcceptTopic/'+randomStr;
 
 
 
@@ -25,7 +26,7 @@ module.exports.initActiveMQ = function () {
     client.connect(function (sessionId) {
         log.info('Active MQ Server Connected!');
         log.info('SessionID: ', sessionId);
-        client.subscribe(createJobTopic, async function (body, headers) {
+        client.subscribe(createJobTopic,  async function (body, headers) {
             systemSendTo3rdLog.info('From Active MQ Server(topic):', createJobTopic);
             systemSendTo3rdLog.info('From Active MQ Server(body):', body);
             await activemqService.affectCreateJobHandler(body)

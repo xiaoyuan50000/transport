@@ -263,7 +263,7 @@ const QueryIndentsByFilter = async function (roleName, action, execution_date,
             b.serviceModeId, sm.value as serviceModeValue, b.serviceProviderId, b.\`status\`, c.groupName, b.instanceId, b.approve, b.serviceTypeId,
             b.vehicleType, b.noOfVehicle, b.noOfDriver, b.endorse, b.isImport, b.completeCount, b.tripNo, b.driver, b.contractPartNo, 
             b.repeats, IFNULL(b.periodStartDate, CONCAT(b.executionDate,' ',b.executionTime)) as endorseDate, b.reEdit, st.category, e.mobiusUnit,
-            b.duration, b.periodEndDate
+            b.duration, b.periodEndDate, b.unitOwnFund
         FROM
             request a 
         LEFT JOIN job b on a.id = b.requestId
@@ -549,6 +549,20 @@ const setTripBtns = function (trips, isEndorsed, workFlowInstanceIdList, assigne
         }
         if (trip.instanceId) {
             trip.btns.push("Cancel")
+
+            // hard code role btn
+            if (status == INDENT_STATUS.WAITAPPROVEDRF.toLowerCase() && (roleName == ROLE.RF || roleName == ROLE.OCCMgr)
+                || status == INDENT_STATUS.WAITAPPROVEDUCO.toLowerCase() && roleName == ROLE.UCO && !trip.unitOwnFund) {
+                if (trip.btns.indexOf("Edit") == -1) {
+                    trip.btns.push("Edit")
+                }
+                if (trip.btns.indexOf("Approve") == -1) {
+                    trip.btns.push("Approve")
+                }
+                if (trip.btns.indexOf("Reject") == -1) {
+                    trip.btns.push("Reject")
+                }
+            }
         }
     }
 

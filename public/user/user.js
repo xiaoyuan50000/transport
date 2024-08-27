@@ -77,7 +77,7 @@ const addBtnListening = function () {
 }
 
 const roleSelectChange = async function (text) {
-    text = (text != "" && text != null) ? text.toUpperCase() : text
+    text = (text != "" && text != null) ? text : text
     if (text == "TSP") {
         $("#serviceProvider").css("display", "block")
         $("#group").css("display", "none")
@@ -201,7 +201,7 @@ const check = async function (input) {
 
 const saveUser = async function () {
     let obj = form.serializeObject()
-    let roleName = $("select[name='role']").find("option:selected").text().toUpperCase();
+    let roleName = $("select[name='role']").find("option:selected").text();
     let serviceTypeId = null
     if (roleName == "RF" || roleName == "RA" || roleName == "CM" || occ.indexOf(roleName) != -1) {
         let serviceTypeArray = []
@@ -362,7 +362,7 @@ const initUserTable = function () {
 }
 
 const haveServiceTypePermission = function (roleName) {
-    return roleName && (roleName == "RF" || roleName == "RA" || roleName == "CM" || occ.indexOf(roleName.toUpperCase()) != -1)
+    return roleName && (roleName == "RF" || roleName == "RA" || roleName == "CM" || occ.indexOf(roleName) != -1)
 }
 
 const disabledRoleSelect = function (roleName) {

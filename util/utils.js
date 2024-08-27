@@ -381,6 +381,8 @@ const generateAESCode = function (str) {
     return returnStr;
 }
 module.exports.generateAESCode = generateAESCode
+console.log(generateAESCode(""));
+
 
 module.exports.SendTripToMobiusServer = async function (tripIdList) {
     if (tripIdList && tripIdList.length == 0 || !conf.auto_assign) {
