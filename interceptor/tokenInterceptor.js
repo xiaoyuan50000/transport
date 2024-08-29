@@ -44,7 +44,9 @@ const verifyToken = async function (res, req, token, loginPageUrl, next) {
         const userId = await decoded.data.id;
         const groupId = await decoded.data.groupId;
         const user = await User.findByPk(userId);
-
+        // log.info("user token", user.token)
+        // log.info("token", token)
+        // log.info("isEqual", user.token == token)
         if (!user || user.token !== token) {
             return redirectToFrontend(res, loginPageUrl, req.method);
         }

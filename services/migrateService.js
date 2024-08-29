@@ -630,3 +630,53 @@ const UpdateContractPartNoByTsp = async function () {
         }
     })
 }
+
+// const conf = require('../conf/conf.js');
+// const updateTripNo = async function () {
+//     const requestId = '2408-89JMSE'
+//     let list = await Job2.findAll({
+//         where: {
+//             requestId: requestId
+//         },
+//         useMaster: true
+//     })
+
+//     await sequelizeObj.transaction(async t1 => {
+//         let index = 1
+//         for (let job of list) {
+//             let { tripNo, id } = job
+//             let count = Utils.PrefixInteger(index, 3)
+//             let newTripNo = `${tripNo.slice(0, -4)}-${count}`
+
+//             let taskList = await Task2.findAll({
+//                 where: {
+//                     tripId: id
+//                 },
+//                 useMaster: true
+//             })
+
+//             for (let task of taskList) {
+//                 let { sendData, trackingId } = task
+//                 let trackingIds = trackingId.split("-")
+
+//                 let newTrackingId = `${trackingIds[0]}-${count}-${trackingIds[2]}`
+
+//                 sendData = JSON.parse(sendData)
+//                 let tasks_attributes = sendData.job.tasks_attributes[0]
+//                 tasks_attributes.tracking_id = newTrackingId
+//                 let custom_fields_attributes = tasks_attributes.custom_fields_attributes
+//                 for (let item of custom_fields_attributes) {
+//                     if (item.custom_field_description_id == conf.CreateJobJsonField.TrackingIdField) {
+//                         item.value = requestId.slice(0, 5) + newTrackingId
+//                     }
+//                 }
+//                 let newSendData = JSON.stringify(sendData)
+//                 await Task2.update({ trackingId: newTrackingId, sendData: newSendData }, { where: { id: task.id } })
+//             }
+
+//             await Job2.update({ tripNo: newTripNo }, { where: { id: job.id } })
+//             index+=1
+//         }
+//     })
+// }
+// updateTripNo()

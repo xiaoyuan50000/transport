@@ -157,7 +157,7 @@ module.exports.CreateIndent = async function (req, res) {
     await UpdateIndentInfo(indentId)
     let mv = await IsCategoryMV(serviceType)
     if (mv) {
-        let jobs = await Job2.findAll({ where: { requestId: indentId } })
+        let jobs = await Job2.findAll({ where: { requestId: indentId }, useMaster: true })
 
         if (typeOfVehicle != "-" && driver == 1) {
             await UpdateMVContractNo(jobs)
@@ -389,7 +389,7 @@ module.exports.CreateTrip = async function (req, res) {
     if (user.groupName == null) {
         return Response.error(res, UnitError);
     }
-    let jobs = await Job2.findAll({ where: { requestId: indentId } })
+    let jobs = await Job2.findAll({ where: { requestId: indentId }, useMaster: true })
     let beforeCreateJobIds = jobs.map(item => item.id)
     let indent = await Request2.findByPk(indentId)
 
@@ -412,7 +412,8 @@ module.exports.CreateTrip = async function (req, res) {
                 id: {
                     [Op.notIn]: beforeCreateJobIds
                 }
-            }
+            },
+            useMaster: true
         })
         if (typeOfVehicle != "-" && driver == 1) {
             await UpdateMVContractNo(jobs)
@@ -2949,7 +2950,8 @@ const UpdateIndentInfo = async function (requestId, additionalRemarks = null) {
         },
         order: [
             ['executionDate', "Asc"]
-        ]
+        ],
+        useMaster: true
     })
     let noOfTrips = trips.length
     let startDate = trips[0].executionDate
@@ -3315,7 +3317,6 @@ const GetUnEndorseIndent = async function (unitId) {
             'Completed',
             'Late Trip',
             'No Show',
-            'cancelled by tsp',
             'cancelled'
         )`,
         {

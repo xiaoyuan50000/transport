@@ -119,8 +119,8 @@ const addTestDatas = async function () {
             let executionTime = '11:00'
             let noOfVehicle = randomRange(1, 4)
 
-            periodStartDate= `${executionDate} ${executionTime}`
-            periodEndDate = moment(periodStartDate).add(9,'hour').format('YYYY-MM-DD HH:mm')
+            periodStartDate = `${executionDate} ${executionTime}`
+            periodEndDate = moment(periodStartDate).add(9, 'hour').format('YYYY-MM-DD HH:mm')
             await CreateTripByRepeats(indent, pickupDestination, pickupNotes, dropoffDestination, dropoffNotes, typeOfVehicle, Number(noOfVehicle), Number(noOfDriver), pocName, contactNumber,
                 repeats, repeatsOn, executionDate, executionTime, endsOn, periodStartDate, periodEndDate, duration, serviceProvider, user, driver, tripRemarks,
                 serviceMode, serviceType, preParkDate)
@@ -290,20 +290,20 @@ const UpdateIndentInfo = async function (requestId, additionalRemarks = null) {
     })
 }
 
-const chooseTSP = async function(){
-    let results =await Task2.findAll({
-        where:{
+const chooseTSP = async function () {
+    let results = await Task2.findAll({
+        where: {
             tripId: {
                 [Op.gte]: 36067
             }
         }
     })
-    for(let row of results){
+    for (let row of results) {
         let job = await Job2.findByPk(row.tripId)
         await requestService.DoUpdateTSPAndApprove(row.selectableTsp, '2024-06-04 14:41:00', 6, row, job)
     }
 }
-chooseTSP()
+// chooseTSP()
 
 function startRun() {
     addTestDatas()
@@ -341,7 +341,7 @@ function startRun() {
 //             serviceTypeId: tsp
 //         })
 //     }
-    
+
 
 //     // let users = await User.findAll({
 //     //     where: {
@@ -442,7 +442,7 @@ function startRun() {
 //         }
 
 //         let num = Math.floor(Math.random() * 10) + 1;
-        
+
 //         // await requestService.CreateIndentTest({
 //         //     "indent": {
 //         //         "additionalRemarks": "123",

@@ -3,7 +3,7 @@ let roleName = user.roleName;
 let currentUserId = $('body').data('user-id')
 
 let table
-let TASK_STATUS = ["completed", "late trip", "no show", "cancelled", "cancelled by TSP"]
+let TASK_STATUS = ["completed", "late trip", "no show", "cancelled", "cancelled by tsp"]
 let rateVal = 0
 // let occ = ["OCC Mgr"]
 let today = moment().format("DD/MM/YYYY")

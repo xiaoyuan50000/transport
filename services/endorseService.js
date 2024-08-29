@@ -242,7 +242,7 @@ const QueryEndorseDatas = async function (reqParams) {
         LEFT JOIN job a ON a.id = b.tripId
         LEFT JOIN request f ON b.requestId = f.id
         LEFT JOIN service_type st on a.serviceTypeId = st.id
-        where 1=1 and a.loaTagId is null and a.vehicleType != '-' AND b.serviceProviderId is not null`
+        where 1=1 and a.loaTagId is null and a.vehicleType != '-' AND b.serviceProviderId is not null and b.taskStatus != 'cancelled by tsp'`
 
     let whereSql = ``;
     let filter1 = filterByUserRole(currentUserRole, user, mvServiceTypeIds, isEndorse, endorsed)
@@ -296,7 +296,7 @@ const QueryEndorseDatas = async function (reqParams) {
             job a
         LEFT JOIN job_task b ON a.id = b.tripId
         LEFT JOIN request f ON a.requestId = f.id
-        where 1=1 and a.loaTagId is null and a.vehicleType != '-' AND b.serviceProviderId is not null`
+        where 1=1 and a.loaTagId is null and a.vehicleType != '-' AND b.serviceProviderId is not null and b.taskStatus != 'cancelled by tsp'`
 
     let allField = `SELECT
             b.id as taskId, a.pocCheckStatus,a.tripNo, b.tripId, a.\`status\` as tripStatus,b.notifiedTime, b.tspChangeTime, b.cancellationTime,
