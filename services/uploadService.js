@@ -1006,7 +1006,7 @@ module.exports.uploadJobFile = async function (req, res) {
                     let destinationLocationObj = locationList.find(o => o.locationName == destinationLocation)
                     let destinationLocationId = destinationLocationObj ? destinationLocationObj.id : 0
 
-                    let hubNodeObj = hubNodeList.find(o => o.unit == hub && o.subUnit || "" == node)
+                    let hubNodeObj = hubNodeList.find(o => o.unit == hub && node != "" && o.subUnit == node || o.unit == hub && o.subUnit == null && node == "")
                     let conductingUnitCode = ""
                     if (hubNodeObj && hubNodeObj.group) {
                         conductingUnitCode = hubNodeObj.group.split(',')[0]
