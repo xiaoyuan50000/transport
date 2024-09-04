@@ -1000,7 +1000,7 @@ module.exports.uploadJobFile = async function (req, res) {
                     const [hub, node, indentId, purpose, activityName, resourceType, resourceQty, driverQty,
                         startDate, startTime, endDate, endTime, reportingLocation, destinationLocation,
                         pocName, pocMobileNumber, pocUnit] = data
-
+                    log.info(data)
                     let reportingLocationObj = locationList.find(o => o.locationName == reportingLocation)
                     let reportingLocationId = reportingLocationObj ? reportingLocationObj.id : 0
                     let destinationLocationObj = locationList.find(o => o.locationName == destinationLocation)
