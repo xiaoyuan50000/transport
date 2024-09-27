@@ -39,6 +39,7 @@ const getUserInfo = function (data) {
  * @param {*} res
  */
 async function index(req, res) {
+  let loginName = null
   try {
     const { code, state } = req.query
     const baseurl = config.baseUrls[state]
@@ -51,11 +52,12 @@ async function index(req, res) {
     )
 
     let { nric, name } = getUserInfo(data)
-    let loginName = utils.GetLoginName(nric, name)
+    loginName = utils.GetLoginName(nric, name)
     log.info(`LoginName: ${loginName}, FullName: ${name}`)
 
     let userBase = await loginService.getUserExistByLoginName(loginName, name)
     if (userBase.code == 0) {
+      await loginService.CreateSingpassLoginDetail(loginName, userBase.errorMsg)
       return res.render('login', { title: 'Login', error: userBase.errorMsg })
     }
 
@@ -63,28 +65,31 @@ async function index(req, res) {
 
     if (!user) {
       const error = "Login failed. User does not exist."
-      console.log(error)
       log.error(error)
+      await loginService.CreateSingpassLoginDetail(loginName, error)
       return res.render('login', { title: 'Login', error: error })
     }
 
     if (user.status == USER_STATUS.LockOut) {
       await loginService.lockOutUser(user)
-      let error = `Account [${loginName}] is locked, please contact administrator.`
+      const error = `Account [${loginName}] is locked, please contact administrator.`
       log.error(error)
+      await loginService.CreateSingpassLoginDetail(loginName, error)
+
       return res.render('login', { title: 'Login', error: error })
-    } 
+    }
     else if (user.status == USER_STATUS.Deactivated) {
       await loginService.deactivatedUser(user)
-      let error = `Account [${loginName}] is deactivated, please contact administrator.`
+      const error = `Account [${loginName}] is deactivated, please contact administrator.`
       log.error(error)
+      await loginService.CreateSingpassLoginDetail(loginName, error)
       return res.render('login', { title: 'Login', error: error })
     }
 
     if (user.ORDExpired) {
-      let error = `Login Failed. Account [${loginName}] ORD Expired, please contact administrator.`
+      const error = `Login Failed. Account [${loginName}] ORD Expired, please contact administrator.`
       log.error(error)
-
+      await loginService.CreateSingpassLoginDetail(loginName, error)
       return res.render('login', { title: 'Login', error: error })
     }
 
@@ -98,6 +103,7 @@ async function index(req, res) {
   } catch (error) {
     console.log(error)
     log.error(error)
+    await loginService.CreateSingpassLoginDetail(loginName, error.toString())
     // res.status(500).render('error', { error })
     return res.render('login', { title: 'Login', error: error })
   }

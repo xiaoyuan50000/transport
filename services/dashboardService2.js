@@ -284,6 +284,8 @@ module.exports.GetDashboardDatas = async function (req, res) {
     else if (userInfo.roleName == ROLE.UCO || userInfo.roleName == ROLE.RQ) {
         filter += ` and c.groupId = ?`
         replacements.push(userInfo.groupId)
+        // UCO,RQ view own group data
+        units = units.filter(a => a.id == userInfo.groupId)
     }
 
     if (isNotEmptyNull(unit)) {

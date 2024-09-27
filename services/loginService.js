@@ -5,10 +5,11 @@ const Response = require('../util/response.js');
 const { JWTHeader } = require('../conf/jwt');
 const moment = require('moment');
 
-const { USER_STATUS, USER_ACTIVITY } = require('../util/content');
+const { USER_STATUS, USER_ACTIVITY, LoginFrom, LoginType } = require('../util/content');
 const { User } = require('../model/user');
 const { Group } = require('../model/group');
 const { Role } = require('../model/role');
+const { LoginDetail } = require('../model/loginDetail.js');
 const { UserManagementReport } = require('../model/userManagementReport');
 const conf = require('../conf/conf.js');
 const { sequelizeDriverObj } = require('../sequelize/dbConf-driver');
@@ -53,53 +54,72 @@ const checkLoginUser = async function (loginName, password) {
 }
 
 const loginServer = async function (req, res) {
+    let loginName = req.body.username;
+    let password = req.body.password;
+    let from = req.body.from;
+    let mobileOS = req.body.mobileOS;
     try {
-        let loginName = req.body.username;
-        let password = req.body.password;
 
         let user = null;
         if (loginName) {
             let loginUser = await checkLoginUser(loginName, password)
             if (loginUser.loginError != "") {
+                await CreateLoginDetail(loginName, password, loginUser.loginError, from, mobileOS)
                 return Response.error(res, loginUser.loginError);
             }
             user = loginUser.user
         } else {
             user = await User.findOne({ where: { contactNumber: req.body.mobileNumber } });
             if (ifPOCLoginSuccess(user)) {
-                return Response.error(res, "Login Failed. Not POC User.");
+                const err = "Login Failed. Not POC User."
+                await CreateLoginDetail(req.body.mobileNumber, password, err, from, mobileOS)
+                return Response.error(res, err);
             }
         }
 
         if (user == null) {
-            return Response.error(res, "Login Failed. Login Name or Password is incorrect.");
+            const err = "Login Failed. Login Name or Password is incorrect."
+            await CreateLoginDetail(loginName, password, err, from, mobileOS)
+            return Response.error(res, err);
         }
 
         let times = Number(user.times)
         let tryTimes = 2
         if (times > tryTimes) {
-            return Response.error(res, `Account [${loginName}] is locked, please contact administrator.`);
+            const err = `Account [${loginName}] is locked, please contact administrator.`
+            await CreateLoginDetail(loginName, password, err, from, mobileOS)
+            return Response.error(res, err);
         }
 
         // valid password
         if (password.toLowerCase() != user.password.toLowerCase()) {
             await tryTimesExceeded(times, tryTimes, user)
             if (tryTimes - times == 0) {
-                return Response.error(res, `Login Failed. Account [${loginName}] is locked, please contact administrator.`);
+                const err = `Login Failed. Account [${loginName}] is locked, please contact administrator.`
+                await CreateLoginDetail(loginName, password, err, from, mobileOS)
+                return Response.error(res, err);
             }
-            return Response.error(res, `Login Failed. Username or Password is incorrect. No. of tries left: ${tryTimes - times}`);
+            const err = `Login Failed. Username or Password is incorrect. No. of tries left: ${tryTimes - times}`
+            await CreateLoginDetail(loginName, password, err, from, mobileOS)
+            return Response.error(res, err);
         }
         else if (user.ORDExpired) {
-            return Response.error(res, `Login Failed. Account [${loginName}] ORD Expired, please contact administrator.`);
+            const err = `Login Failed. Account [${loginName}] ORD Expired, please contact administrator.`
+            await CreateLoginDetail(loginName, password, err, from, mobileOS)
+            return Response.error(res, err);
         }
         // valid expried login
         else if (user.status == USER_STATUS.LockOut) {
             await lockOutUser(user)
-            return Response.error(res, `Account [${loginName}] is locked, please contact administrator.`);
+            const err = `Account [${loginName}] is locked, please contact administrator.`
+            await CreateLoginDetail(loginName, password, err, from, mobileOS)
+            return Response.error(res, err);
         }
         else if (user.status == USER_STATUS.Deactivated) {
             await deactivatedUser(user)
-            return Response.error(res, `Account [${loginName}] is deactivated, please contact administrator.`);
+            const err = `Account [${loginName}] is deactivated, please contact administrator.`
+            await CreateLoginDetail(loginName, password, err, from, mobileOS)
+            return Response.error(res, err);
         }
 
         let token = utils.generateTokenKey({ id: user.id, groupId: user.group, loginName: loginName, date: new Date() });
@@ -119,10 +139,12 @@ const loginServer = async function (req, res) {
             roleName: user.roleName,
             username: user.username,
         }
+        await CreateLoginDetail(loginName || req.body.mobileNumber, password, "Login Success.", from, mobileOS)
         return Response.success(res, utils.generateAESCode(JSON.stringify({ ...return_user, expire: expireDate, isFirstLogin: user.lastChangePasswordDate == null })));
         // return Response.success(res, { ...return_user, expire: expireDate, isFirstLogin: user.lastChangePasswordDate == null, token: token });
     } catch (ex) {
         log.error(ex)
+        await CreateLoginDetail(loginName || req.body.mobileNumber, password, ex.toString(), from, mobileOS)
         return Response.error(res, "Login Failed.");
     }
 };
@@ -258,6 +280,7 @@ module.exports.logoutServer = logoutServer;
 
 module.exports.loginUseSingpass = async function (req, res) {
     let data = req.body.data
+    let mobileOS = req.body.mobileOS
     let loginName = data.split('***')[0]
     let fullname = data.split('***')[1]
     let user = await User.findOne({ where: { loginName: loginName, username: fullname } });
@@ -266,30 +289,43 @@ module.exports.loginUseSingpass = async function (req, res) {
         if (!user) {
             let { code, errorMsg } = await getUserExistByLoginName(loginName, fullname)
             if (code == 0) {
+                await CreateSingpassLoginDetail(loginName, errorMsg, mobileOS)
                 return Response.error(res, errorMsg);
             }
         }
         if (!user) {
-            return Response.error(res, "Login Failed. User does not exist.");
+            const err = "Login Failed. User does not exist."
+            await CreateSingpassLoginDetail(loginName, err, mobileOS)
+            return Response.error(res, err);
         }
     }
     let role = await Role.findByPk(user.role)
     if (!role) {
-        return Response.error(res, "Login Failed. Invalid Role.");
+        const err = "Login Failed. Invalid Role."
+        await CreateSingpassLoginDetail(loginName, err, mobileOS)
+        return Response.error(res, err);
     }
     if (role.roleName == "POC") {
-        return Response.error(res, "Login Failed. POC user cannot login.");
+        const err = "Login Failed. POC user cannot login."
+        await CreateSingpassLoginDetail(loginName, err, mobileOS)
+        return Response.error(res, err);
     }
 
     if (user.status == USER_STATUS.LockOut) {
         await lockOutUser(user)
-        return Response.error(res, `Account [${loginName}] is locked, please contact administrator.`);
+        const err = `Account [${loginName}] is locked, please contact administrator.`
+        await CreateSingpassLoginDetail(loginName, err, mobileOS)
+        return Response.error(res, err);
     } else if (user.status == USER_STATUS.Deactivated) {
         await deactivatedUser(user)
-        return Response.error(res, `Account [${loginName}] is deactivated, please contact administrator.`);
+        const err = `Account [${loginName}] is deactivated, please contact administrator.`
+        await CreateSingpassLoginDetail(loginName, err, mobileOS)
+        return Response.error(res, err);
     }
     if (user.ORDExpired) {
-        return Response.error(res, `Login Failed. Account [${loginName}] ORD Expired, please contact administrator.`);
+        const err = `Login Failed. Account [${loginName}] ORD Expired, please contact administrator.`
+        await CreateSingpassLoginDetail(loginName, err, mobileOS)
+        return Response.error(res, err);
     }
 
     let token = utils.generateTokenKey({ id: user.id, groupId: user.group, loginName: loginName, date: new Date() });
@@ -310,6 +346,7 @@ module.exports.loginUseSingpass = async function (req, res) {
         roleName: user.roleName,
         username: user.username,
     }
+    await CreateSingpassLoginDetail(loginName, "Login Success.", mobileOS)
     return Response.success(res, utils.generateAESCode(JSON.stringify({ ...return_user, expire: expireDate, isFirstLogin: false })));
 }
 
@@ -323,17 +360,25 @@ const LoginByMobiusServer = async function (req, res, next) {
 
     let user = await User.findOne({ where: { loginName: loginName, password: password } });
     if (!user) {
-        return res.render('login', { title: 'Login', error: "Login Failed. User does not exist." })
+        const err = "Login Failed. User does not exist."
+        await CreateSwitchLoginDetail(loginName, password, err)
+        return res.render('login', { title: 'Login', error: err })
     }
     let role = await Role.findByPk(user.role)
     if (!role) {
-        return res.render('login', { title: 'Login', error: "Login Failed. Invalid Role." })
+        const err = "Login Failed. Invalid Role."
+        await CreateSwitchLoginDetail(loginName, password, err)
+        return res.render('login', { title: 'Login', error: err })
     }
     if (role.roleName == "POC") {
-        return res.render('login', { title: 'Login', error: "Login Failed. POC user cannot login." })
+        const err = "Login Failed. POC user cannot login."
+        await CreateSwitchLoginDetail(loginName, password, err)
+        return res.render('login', { title: 'Login', error: err })
     }
     if (password.toLowerCase() != user.password.toLowerCase()) {
-        return res.render('login', { title: 'Login', error: "Login Failed. Username or Password is incorrect." })
+        const err = "Login Failed. Username or Password is incorrect."
+        await CreateSwitchLoginDetail(loginName, password, err)
+        return res.render('login', { title: 'Login', error: err })
     }
 
     let token = utils.generateTokenKey({ id: user.id, groupId: user.group, loginName: loginName, date: new Date() });
@@ -350,6 +395,7 @@ const LoginByMobiusServer = async function (req, res, next) {
         roleName: user.roleName,
         username: user.username,
     }
+    await CreateSwitchLoginDetail(loginName, password, "Login Success.")
     let userinfo = utils.generateAESCode(JSON.stringify({ ...return_user, expire: expireDate, isFirstLogin: user.lastChangePasswordDate == null }))
     return res.render('index', { title: 'Index', userinfo: userinfo });
 }
@@ -366,6 +412,9 @@ module.exports.reDirectToMobiusServer = async function (req, res) {
 
 module.exports.getDecodeAESCode = async function (req, res) {
     let { userId, data } = req.body
+    if (data == 'undefined') {
+        return Response.success(res, null)
+    }
     let user = await User.findByPk(userId)
     if (!data) {
         await user.update({ token: null })
@@ -387,4 +436,45 @@ module.exports.reDirectToRegisterMV = async function (req, res) {
     let info = JSON.stringify({ dataFrom: 'system', userId: userId })
     let str = utils.generateAESCode(info)
     return Response.success(res, { mobius_server_url: conf.mobius_server_url, str: str })
+}
+
+const CreateLoginDetail = async function (loginName, password, description, from, mobileOS) {
+    let record = {
+        username: loginName,
+        password: password,
+        type: LoginType.Input,
+        from: from,
+        mobileOS: mobileOS,
+        description: description
+    }
+    if (!from) {
+        record.from = LoginFrom.CV
+    }
+    await LoginDetail.create(record)
+}
+
+const CreateSingpassLoginDetail = async function (loginName, description, mobileOS = null) {
+    let record = {
+        username: loginName,
+        type: LoginType.Singpass,
+        description: description,
+    }
+    if (mobileOS) {
+        record.mobileOS = mobileOS
+        record.from = LoginFrom.MobileCV
+    } else {
+        record.from = LoginFrom.CV
+    }
+    await LoginDetail.create(record)
+}
+module.exports.CreateSingpassLoginDetail = CreateSingpassLoginDetail
+
+const CreateSwitchLoginDetail = async function (loginName, password, description) {
+    await LoginDetail.create({
+        username: loginName,
+        password: password,
+        type: LoginType.Switch,
+        from: LoginFrom.MV,
+        description: description
+    })
 }

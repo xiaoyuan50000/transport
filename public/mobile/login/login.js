@@ -6,6 +6,7 @@ $(function () {
     let isAndroid = platName.indexOf("Android")>-1 || platName.indexOf('Lindex')>-1;
     let regex = /\(i[^;]+;( U;)? CPU.+Mac OS X/
     let isIos = !!regex.exec(platName);
+    
     autoLogin();
 
     $('.btn-login').on('click', function () {
@@ -70,11 +71,13 @@ function checkLogin(username, password) {
 }
 
 const loginRequest = async function (username, password, autoLogin = 0) {
-    let params = {password: password, autoLogin: autoLogin};
+    let params = {password: password, autoLogin: autoLogin, mobileOS: getMobileOS()};
     if (currentSystemType == 'CV') {
         params.username = username;
+        params.from = "Mobile CV"
     } else {
         params.mobileNumber = username;
+        params.from = "Mobile POC"
     }
     await axios.post('/loginServer', params).then(res => {
         if (res.data.code == 0) {
@@ -122,4 +125,18 @@ const getDecodeAESCode = async function (data) {
     return await axios.post('/getDecodeAESCode', {data: data}).then(res => {
         return res.data.data;
     });
+}
+
+const getMobileOS = function () {
+    const agent = navigator.userAgent.toLowerCase();
+    if (agent.indexOf("android") != -1) {
+        return "Android"
+
+    } else if (agent.indexOf("mac os") != -1) {
+        return "IOS"
+
+    } else if (agent.indexOf("windows") != -1) {
+        return "Windows"
+    }
+    return "Unknow"
 }

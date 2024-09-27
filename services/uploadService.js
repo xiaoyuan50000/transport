@@ -1102,7 +1102,7 @@ const SendCSVFileToNGTS = function (filepath, callback) {
             port: port
         }
     };
-    axios.post('/upload/indent', param, config).then(function (result) {
+    axios.post(conf.atms_server_url+'/upload/indent', param, config).then(function (result) {
         callback({
             code: result.data.code,
             msg: result.data.msg

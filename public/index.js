@@ -116,11 +116,11 @@ function setUserName() {
         removeNoPermissionMenu(["FUEL", "TEMPLATE"])
     } else if (user.roleName == "UCO") {
         $(".setting").append(settingDropdown.replace("{{item}}", manageUserBtn))
-        removeNoPermissionMenu(["INVOICE", "HISTORY", "CONTRACT", "DASHBOARD", "OPERATIONDASHBOARD", "REPORT", "URGENTTASK", "FEEDBACK"])
+        removeNoPermissionMenu(["INVOICE", "HISTORY", "CONTRACT", "OPERATIONDASHBOARD", "REPORT", "URGENTTASK", "FEEDBACK"])
     } else if (user.roleName == "RQ") {
         $(".setting").append(settingDropdown.replace("{{item}}", ""))
         $(".dropdown-divider").remove()
-        removeNoPermissionMenu(["OPEN", "INVOICE", "ARBITRATION", "HISTORY", "CONTRACT", "BUDGET", "MOBIUSTASK", "DASHBOARD", "OPERATIONDASHBOARD", "REPORT", "TEMPLATE", "URGENTTASK", "FEEDBACK"])
+        removeNoPermissionMenu(["OPEN", "INVOICE", "ARBITRATION", "HISTORY", "CONTRACT", "BUDGET", "MOBIUSTASK", "OPERATIONDASHBOARD", "REPORT", "TEMPLATE", "URGENTTASK", "FEEDBACK"])
     } else if (user.roleName == "TSP") {
         $(".setting").append(settingDropdown.replace("{{item}}", ""))
         $(".dropdown-divider").remove()

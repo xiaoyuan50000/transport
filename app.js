@@ -71,6 +71,15 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
 
+app.use((req, res, next) => {
+	res.header('Access-Control-Allow-Origin', '*');
+	next();
+});
+app.use((req, res, next) => {
+	res.header('Permissions-Policy', 'camera=()');
+	next();
+});
+
 app.use(function (req, res, next) {
 	if (['/._darcs', '/.bzr', '/.hg', '/BitKeeper', '/latest/meta-data/'].includes(req.url)) {
 		const err = new Error('Not Found');

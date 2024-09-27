@@ -26,6 +26,7 @@ function singpassLoginCallback(singpassResCode, nric) {
         console.log('singpassLoginCallback autoLogin: singpassResCode=' + singpassResCode + ', nric=' + nric);
         axios.post('./loginUseSingpass', {
             data: nric,
+            mobileOS: getMobileOS()
         }).then(res => {
             if (res.data.code == 0) {
                 simplyAlert(res.data.msg, 'red');

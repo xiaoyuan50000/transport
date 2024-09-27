@@ -103,5 +103,15 @@ module.exports = {
         PendingForApproval: "Pending for approval",
         Approved: "Approved",
         Rejected: "Rejected",
+    },
+    LoginType: {
+        Input: 'Input',
+        Singpass: 'Singpass',
+        Switch: 'Switch'
+    },
+    LoginFrom: {
+        CV: 'CV',
+        MV: 'MV',
+        MobileCV: 'Mobile CV',
     }
 };

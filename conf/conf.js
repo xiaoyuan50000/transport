@@ -17,7 +17,7 @@ module.exports.dbConf = {
 
 module.exports.driverDbConf = {
     host: 'localhost',
-	// host: '192.168.1.11',
+	// host: '192.168.1.12',
     user: 'root',
     password: 'root',
     port: 3306,
@@ -108,7 +108,7 @@ module.exports.group_restriction_off = false
 
 module.exports.group_unlock_restriction_day = 7
 
-module.exports.mobius_server_url = 'http://192.168.1.18:5000'
+module.exports.mobius_server_url = 'http://192.168.1.12:5080'
 
 module.exports.auto_assign = false 
 
